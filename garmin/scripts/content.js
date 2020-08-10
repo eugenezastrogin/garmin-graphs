@@ -1,16 +1,24 @@
-function chart(data) {
+const polarColors = ['#ecadc4', '#f4e3b1', '#c9e7b6', '#bee5f1', '#e3e5e5'];
+// const strydColors = ['#00fa15', '#00bafd', '#ffb800', '#ff6d00', '#dd3e17'].reverse();
+const strydColors = ['#dd3e17', '#ff6d00', '#ffb800', '#00bafd', '#00fa15'];
+const heartZones = [
+  [190, 171],
+  [171, 152],
+  [152, 133],
+  [133, 114],
+  [114, 95],
+];
+const powerZones = [
+  [400, 325],
+  [325, 282],
+  [282, 254],
+  [254, 226],
+  [226, 183],
+];
+function chart(data, zones, colors, opacity = 1) {
   const width = 1000;
   const height = 200;
   const margin = { top: 20, right: 5, bottom: 30, left: 30 };
-  const colors = ['#ecadc4', '#f4e3b1', '#c9e7b6', '#bee5f1', '#e3e5e5'];
-
-  const zones = [
-    [190, 171],
-    [171, 152],
-    [152, 133],
-    [133, 114],
-    [114, 95],
-  ];
 
   const line = d3
     .line()
@@ -29,8 +37,11 @@ function chart(data) {
       .call(
         d3
           .axisBottom(x)
-          .ticks(width / 80)
-          .tickSizeOuter(0),
+          .ticks(10)
+          .tickSizeOuter(0)
+          .tickFormat(n =>
+            new Date(n * 1000).toISOString().substr(11, 8).replace(/^0+:/, ''),
+          ),
       )
       .call(g => g.select('.domain').remove());
   const yExtent = d3.extent(data, d => d[1]);
@@ -62,7 +73,7 @@ function chart(data) {
       .attr('width', x(xExtent[1]) - x(0))
       .attr('height', y(floor) - y(ceil))
       .attr('fill', colors[i])
-      .attr('opacity', 1);
+      .attr('opacity', opacity);
   });
 
   svg.append('g').call(xAxis);
@@ -83,16 +94,20 @@ function chart(data) {
 }
 
 function handleResponse(message) {
-  // console.log(`Message from the background script:  ${message.data}`);
-  const span = document.createElement('span');
-  span.innerText = message.data;
+  if (!message.data) throw new Error('DATA MISSING!');
 
   const oldDiv = [...document.querySelectorAll('.chart-title')].filter(
     el => el.innerText === 'Heart Rate',
   )[0].parentElement.parentElement.parentElement.parentElement;
   const root = oldDiv.parentElement;
-  const graph = chart(message.data);
+  const graph = chart(message.data, heartZones, polarColors);
   root.replaceChild(graph, oldDiv);
+
+  const oldDiv2 = [...document.querySelectorAll('.chart-title')].filter(
+    el => el.innerText === 'Power',
+  )[0].parentElement.parentElement.parentElement.parentElement;
+  const graph2 = chart(message.power, powerZones, strydColors, 0.5);
+  root.replaceChild(graph2, oldDiv2);
 }
 
 function handleError(error) {

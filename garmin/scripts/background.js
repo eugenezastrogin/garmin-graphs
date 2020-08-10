@@ -2,8 +2,10 @@ const hrZones =
   'https://connect.garmin.com/modern/proxy/biometric-service/heartRateZones/*';
 const activity =
   'https://connect.garmin.com/modern/proxy/activity-service/activity/*/details?*';
+const StrydZonesDataFieldID = '18fb2cf0-1a4b-430d-ad66-988c847421f4';
 let hrDataGlobal;
 let activityDataGlobal;
+let powerDataGlobal;
 
 function heartRateDataSniffer(details) {
   let filter = browser.webRequest.filterResponseData(details.requestId);
@@ -47,6 +49,9 @@ function activityDataSniffer(details) {
       }
     }
     const { metricDescriptors, activityDetailMetrics } = JSON.parse(str);
+    const powerMetric = metricDescriptors.find(
+      ({ appID }) => appID && appID === StrydZonesDataFieldID,
+    );
     const hrMetric = metricDescriptors.find(
       ({ key }) => key === 'directHeartRate',
     );
@@ -55,13 +60,18 @@ function activityDataSniffer(details) {
     );
     if (!hrMetric || !secsElapsedMetric) throw new Error('no HR!');
     const { metricsIndex: hrIndex } = hrMetric;
+    const { metricsIndex: powerIndex } = powerMetric;
     const { metricsIndex: secsIndex } = secsElapsedMetric;
     const hrData = activityDetailMetrics.map(({ metrics }) => [
       metrics[secsIndex],
       metrics[hrIndex],
     ]);
-    console.log(hrData);
+    const powerData = activityDetailMetrics.map(({ metrics }) => [
+      metrics[secsIndex],
+      metrics[powerIndex],
+    ]);
     activityDataGlobal = hrData;
+    powerDataGlobal = powerData;
     filter.close();
   };
 
@@ -78,13 +88,13 @@ browser.webRequest.onBeforeRequest.addListener(
   { urls: [activity] },
   ['blocking'],
 );
-console.log('BACKGROUND');
 
 function handleMessage(request, sender, sendResponse) {
-  console.log('Message from the content script: ' + request.greeting);
+  console.log('Content script loaded');
   sendResponse({
     response: 'Response from background script',
     data: activityDataGlobal,
+    power: powerDataGlobal,
   });
 }
 

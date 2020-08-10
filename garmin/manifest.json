@@ -1,9 +1,9 @@
 {
   "manifest_version": 2,
-  "name": "GarminZones",
+  "name": "GarminGraphs",
   "version": "1.0",
 
-  "description": "Adds Colored Zones to Garmin Activities",
+  "description": "Adds Colored Zones to Garmin Activity Graphs",
 
   "icons": {
     "48": "images/icon48.png"
@@ -20,7 +20,7 @@
 
   "browser_action": {
     "default_icon": "images/icon32.png",
-    "default_title": "GarminZones",
+    "default_title": "GarminGraphs",
     "default_popup": "options.html"
   },
 
@@ -37,7 +37,7 @@
 
   "browser_specific_settings": {
     "gecko": {
-      "id": "{f00f1836-6640-4576-aaee-7404b2f8ca0b}"
+      "id": "{93714d9d-3af9-4e4d-941d-1072bc3f5614}"
     }
   }
 }
