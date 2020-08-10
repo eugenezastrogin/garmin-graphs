@@ -4,7 +4,6 @@ const activity =
   'https://connect.garmin.com/modern/proxy/activity-service/activity/*/details?*';
 const StrydZonesDataFieldID = '18fb2cf0-1a4b-430d-ad66-988c847421f4';
 let hrDataGlobal;
-let activityDataGlobal;
 let powerDataGlobal;
 
 function heartRateDataSniffer(details) {
@@ -48,7 +47,10 @@ function activityDataSniffer(details) {
         str += decoder.decode(data[i], { stream });
       }
     }
-    const { metricDescriptors, activityDetailMetrics } = JSON.parse(str);
+
+    const { activityId, metricDescriptors, activityDetailMetrics } = JSON.parse(
+      str,
+    );
     const powerMetric = metricDescriptors.find(
       ({ appID }) => appID && appID === StrydZonesDataFieldID,
     );
@@ -70,7 +72,7 @@ function activityDataSniffer(details) {
       metrics[secsIndex],
       metrics[powerIndex],
     ]);
-    activityDataGlobal = hrData;
+    hrDataGlobal = hrData;
     powerDataGlobal = powerData;
     filter.close();
   };
@@ -89,13 +91,19 @@ browser.webRequest.onBeforeRequest.addListener(
   ['blocking'],
 );
 
-function handleMessage(request, sender, sendResponse) {
-  console.log('Content script loaded');
-  sendResponse({
-    response: 'Response from background script',
-    data: activityDataGlobal,
-    power: powerDataGlobal,
-  });
+function handleMessage(_, _, sendResponse) {
+  const int = setInterval(() => {
+    if (hrDataGlobal && powerDataGlobal) {
+      sendResponse({
+        hr: hrDataGlobal,
+        power: powerDataGlobal,
+      });
+      clearInterval(int);
+    } else {
+      console.log('DATA NOT READY');
+    }
+  }, 100);
+  return true;
 }
 
 browser.runtime.onMessage.addListener(handleMessage);

@@ -1,5 +1,4 @@
 const polarColors = ['#ecadc4', '#f4e3b1', '#c9e7b6', '#bee5f1', '#e3e5e5'];
-// const strydColors = ['#00fa15', '#00bafd', '#ffb800', '#ff6d00', '#dd3e17'].reverse();
 const strydColors = ['#dd3e17', '#ff6d00', '#ffb800', '#00bafd', '#00fa15'];
 const heartZones = [
   [190, 171],
@@ -94,13 +93,11 @@ function chart(data, zones, colors, opacity = 1) {
 }
 
 function handleResponse(message) {
-  if (!message.data) throw new Error('DATA MISSING!');
-
   const oldDiv = [...document.querySelectorAll('.chart-title')].filter(
     el => el.innerText === 'Heart Rate',
   )[0].parentElement.parentElement.parentElement.parentElement;
   const root = oldDiv.parentElement;
-  const graph = chart(message.data, heartZones, polarColors);
+  const graph = chart(message.hr, heartZones, polarColors);
   root.replaceChild(graph, oldDiv);
 
   const oldDiv2 = [...document.querySelectorAll('.chart-title')].filter(
@@ -115,9 +112,7 @@ function handleError(error) {
 }
 
 function notifyBackgroundPage() {
-  var sending = browser.runtime.sendMessage({
-    greeting: 'Greeting from the content script',
-  });
+  const sending = browser.runtime.sendMessage({});
   sending.then(handleResponse, handleError);
 }
 
