@@ -1,0 +1,43 @@
+{
+  "manifest_version": 2,
+  "name": "GarminZones",
+  "version": "1.0",
+
+  "description": "Adds Colored Zones to Garmin Activities",
+
+  "icons": {
+    "48": "images/icon48.png"
+  },
+
+  "permissions": [
+    "storage",
+    "webRequest",
+    "webRequestBlocking",
+
+    "https://connect.garmin.com/modern/proxy/activity-service/activity/*",
+    "https://connect.garmin.com/modern/proxy/biometric-service/heartRateZones/*"
+  ],
+
+  "browser_action": {
+    "default_icon": "images/icon32.png",
+    "default_title": "GarminZones",
+    "default_popup": "options.html"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["https://connect.garmin.com/modern/activity/*"],
+      "js": ["scripts/content.js", "scripts/d3.v5.min.js"]
+    }
+  ],
+
+  "background": {
+    "scripts": ["scripts/background.js"]
+  },
+
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "{f00f1836-6640-4576-aaee-7404b2f8ca0b}"
+    }
+  }
+}
