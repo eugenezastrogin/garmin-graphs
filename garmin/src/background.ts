@@ -1,35 +1,17 @@
+import { Color, Zone, ActivityData } from './types';
+
 const hrZones =
   'https://connect.garmin.com/modern/proxy/biometric-service/heartRateZones/*';
 const activity =
   'https://connect.garmin.com/modern/proxy/activity-service/activity/*/details?*';
-const StrydZonesDataFieldID = '18fb2cf0-1a4b-430d-ad66-988c847421f4';
-let hrDataGlobal;
-let powerDataGlobal;
+const strydZonesDataFieldID = '18fb2cf0-1a4b-430d-ad66-988c847421f4';
+const activityData: ActivityData = {};
 
-function heartRateDataSniffer(details) {
-  let filter = browser.webRequest.filterResponseData(details.requestId);
-  let decoder = new TextDecoder('utf-8');
-
-  filter.ondata = event => {
-    const str = decoder.decode(event.data, { stream: true });
-    const {
-      zone1Floor,
-      zone2Floor,
-      zone3Floor,
-      zone4Floor,
-      zone5Floor,
-      maxHeartRateUsed,
-    } = JSON.parse(str)[0];
-    console.log('MAX HR:', maxHeartRateUsed);
-    filter.write(event.data);
-    filter.disconnect();
-  };
-
-  return {};
-}
-function activityDataSniffer(details) {
-  let filter = browser.webRequest.filterResponseData(details.requestId);
-  let decoder = new TextDecoder('utf-8');
+function activityDataSniffer(
+  details: browser.webRequest._OnBeforeRequestDetails,
+) {
+  const filter = browser.webRequest.filterResponseData(details.requestId);
+  const decoder = new TextDecoder('utf-8');
 
   let data = [];
   filter.ondata = event => {
@@ -52,7 +34,7 @@ function activityDataSniffer(details) {
       str,
     );
     const powerMetric = metricDescriptors.find(
-      ({ appID }) => appID && appID === StrydZonesDataFieldID,
+      ({ appID }) => appID && appID === strydZonesDataFieldID,
     );
     const hrMetric = metricDescriptors.find(
       ({ key }) => key === 'directHeartRate',
@@ -64,24 +46,53 @@ function activityDataSniffer(details) {
     const { metricsIndex: hrIndex } = hrMetric;
     const { metricsIndex: powerIndex } = powerMetric;
     const { metricsIndex: secsIndex } = secsElapsedMetric;
-    const hrData = activityDetailMetrics.map(({ metrics }) => [
+    const heartRate = activityDetailMetrics.map(({ metrics }) => [
       metrics[secsIndex],
       metrics[hrIndex],
     ]);
-    const powerData = activityDetailMetrics.map(({ metrics }) => [
+    const power = activityDetailMetrics.map(({ metrics }) => [
       metrics[secsIndex],
       metrics[powerIndex],
     ]);
-    hrDataGlobal = hrData;
-    powerDataGlobal = powerData;
+    activityData[activityId] = { heartRate, power };
     filter.close();
   };
 
   return {};
 }
 
+const dataSniffer = <T>(cb: (d: T) => void) => (
+  details: browser.webRequest._OnBeforeRequestDetails,
+) => {
+  const filter: any = browser.webRequest.filterResponseData(details.requestId);
+  const decoder = new TextDecoder('utf-8');
+
+  const data: any[] = [];
+  filter.ondata = (event: any) => {
+    data.push(event.data);
+    filter.write(event.data);
+  };
+
+  filter.onstop = () => {
+    let str = '';
+    if (data.length == 1) {
+      str = decoder.decode(data[0]);
+    } else {
+      for (let i = 0; i < data.length; i++) {
+        const stream = i == data.length - 1 ? false : true;
+        str += decoder.decode(data[i], { stream });
+      }
+    }
+
+    cb(JSON.parse(str));
+    filter.close();
+  };
+
+  return {};
+};
+
 browser.webRequest.onBeforeRequest.addListener(
-  heartRateDataSniffer,
+  dataSniffer(d => console.log(d)),
   { urls: [hrZones] },
   ['blocking'],
 );
@@ -91,13 +102,17 @@ browser.webRequest.onBeforeRequest.addListener(
   ['blocking'],
 );
 
-function handleMessage(_, _, sendResponse) {
+function handleMessage(
+  { id }: { id: string },
+  _: browser.runtime.MessageSender,
+  sendResponse: (response?: any) => void,
+) {
+  console.log('REQUESTED ACTIVITY: ', id);
   const int = setInterval(() => {
-    if (hrDataGlobal && powerDataGlobal) {
-      sendResponse({
-        hr: hrDataGlobal,
-        power: powerDataGlobal,
-      });
+    if (id in activityData) {
+      console.log('ENTRY FOUND!');
+      const { power, heartRate } = activityData[id];
+      sendResponse({ heartRate, power });
       clearInterval(int);
     } else {
       console.log('DATA NOT READY');

@@ -1,20 +1,34 @@
-const polarColors = ['#ecadc4', '#f4e3b1', '#c9e7b6', '#bee5f1', '#e3e5e5'];
-const strydColors = ['#dd3e17', '#ff6d00', '#ffb800', '#00bafd', '#00fa15'];
-const heartZones = [
+import { Color, Zone, Data, ActivityEntry } from './types';
+
+const polarColors: Color[] = [
+  '#ecadc4',
+  '#f4e3b1',
+  '#c9e7b6',
+  '#bee5f1',
+  '#e3e5e5',
+];
+const strydColors: Color[] = [
+  '#dd3e17',
+  '#ff6d00',
+  '#ffb800',
+  '#00bafd',
+  '#00fa15',
+];
+const heartZones: Zone[] = [
   [190, 171],
   [171, 152],
   [152, 133],
   [133, 114],
   [114, 95],
 ];
-const powerZones = [
+const powerZones: Zone[] = [
   [400, 325],
   [325, 282],
   [282, 254],
   [254, 226],
   [226, 183],
 ];
-function chart(data, zones, colors, opacity = 1) {
+function chart(data: Data, zones: Zone[], colors: Color[], opacity = 1) {
   const width = 1000;
   const height = 200;
   const margin = { top: 20, right: 5, bottom: 30, left: 30 };
@@ -30,7 +44,7 @@ function chart(data, zones, colors, opacity = 1) {
     .scaleLinear()
     .domain(xExtent)
     .range([margin.left, width - margin.right]);
-  const xAxis = g =>
+  const xAxis = (g: d3.Selection<SVGGElement, undefined, null, undefined>) =>
     g
       .attr('transform', `translate(0,${height - margin.bottom})`)
       .call(
@@ -48,20 +62,11 @@ function chart(data, zones, colors, opacity = 1) {
     .scaleLinear()
     .domain(yExtent)
     .range([height - margin.bottom, margin.top]);
-  const yAxis = g =>
+  const yAxis = (g: d3.Selection<SVGGElement, undefined, null, undefined>) =>
     g
       .attr('transform', `translate(${margin.left},0)`)
       .call(d3.axisLeft(y))
-      .call(g => g.select('.domain').remove())
-      .call(g =>
-        g
-          .select('.tick:last-of-type text')
-          .clone()
-          .attr('x', 3)
-          .attr('text-anchor', 'start')
-          .attr('font-weight', 'bold')
-          .text(data.y),
-      );
+      .call(g => g.select('.domain').remove());
   const svg = d3.create('svg').attr('viewBox', [0, 0, width, height]);
 
   zones.forEach(([ceil, floor], i) => {
@@ -69,7 +74,7 @@ function chart(data, zones, colors, opacity = 1) {
       .append('rect')
       .attr('x', x(0))
       .attr('y', y(ceil))
-      .attr('width', x(xExtent[1]) - x(0))
+      .attr('width', x(xExtent[1]!) - x(0))
       .attr('height', y(floor) - y(ceil))
       .attr('fill', colors[i])
       .attr('opacity', opacity);
@@ -89,30 +94,32 @@ function chart(data, zones, colors, opacity = 1) {
     .attr('stroke-linecap', 'round')
     .attr('d', line);
 
-  return svg.node();
+  return svg.node()!;
 }
 
-function handleResponse(message) {
+function handleResponse(message: ActivityEntry) {
   const oldDiv = [...document.querySelectorAll('.chart-title')].filter(
     el => el.innerText === 'Heart Rate',
-  )[0].parentElement.parentElement.parentElement.parentElement;
-  const root = oldDiv.parentElement;
-  const graph = chart(message.hr, heartZones, polarColors);
+  )[0].parentElement.parentElement.parentElement.parentElement!;
+  const root = oldDiv.parentElement!;
+  const graph = chart(message.heartRate, heartZones, polarColors);
   root.replaceChild(graph, oldDiv);
 
   const oldDiv2 = [...document.querySelectorAll('.chart-title')].filter(
     el => el.innerText === 'Power',
-  )[0].parentElement.parentElement.parentElement.parentElement;
-  const graph2 = chart(message.power, powerZones, strydColors, 0.5);
+  )[0].parentElement.parentElement.parentElement.parentElement!;
+  const graph2 = chart(message.power!, powerZones, strydColors, 0.5);
   root.replaceChild(graph2, oldDiv2);
 }
 
-function handleError(error) {
+function handleError(error: any) {
   console.log(`Error: ${error}`);
 }
 
 function notifyBackgroundPage() {
-  const sending = browser.runtime.sendMessage({});
+  const sending = browser.runtime.sendMessage({
+    id: location.pathname.match(/\/\d+/)![0].slice(1),
+  });
   sending.then(handleResponse, handleError);
 }
 
