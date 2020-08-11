@@ -27,7 +27,7 @@
   "content_scripts": [
     {
       "matches": ["https://connect.garmin.com/modern/activity/*"],
-      "js": ["scripts/content.js", "scripts/d3.v5.min.js"]
+      "js": ["scripts/d3.v5.min.js", "scripts/content.js"]
     }
   ],
 
