@@ -1,13 +1,12 @@
 {
-    "compilerOptions": {
-        "target": "es5",
-        "removeComments": true,
-        "outDir": "./garmin/scripts/",
-        "strict": true,
-        "inlineSources": true,
-        "sourceMap": true
-    },
-    "include": [
-        "./garmin/src/*"
-    ]
+  "compilerOptions": {
+    "target": "es2015",
+    "removeComments": true,
+    "lib": ["es2015", "dom", "dom.iterable"],
+    "outDir": "./garmin/scripts/",
+    "strict": true,
+    "inlineSources": true,
+    "sourceMap": true
+  },
+  "include": ["./garmin/src/*"]
 }
