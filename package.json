@@ -1,0 +1,22 @@
+{
+  "name": "garmingraphs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aethelz/garmin-graphs.git"
+  },
+  "author": "aethelz",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/aethelz/garmin-graphs/issues"
+  },
+  "homepage": "https://github.com/aethelz/garmin-graphs#readme",
+  "dependencies": {
+    "typescript": "^3.9.7"
+  }
+}

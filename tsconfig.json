@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "target": "es5",
+        "removeComments": true,
+        "outDir": "./garmin/scripts/",
+        "strict": true,
+        "inlineSources": true,
+        "sourceMap": true
+    },
+    "include": [
+        "./garmin/src/*"
+    ]
+}
