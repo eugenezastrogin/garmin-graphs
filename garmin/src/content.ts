@@ -109,23 +109,36 @@ function getGraphRootNode(name: string): HTMLDivElement | undefined {
 
 function handleActivityData(message: ActivityEntry) {
   const chartsContainer = document.getElementById('charts-container');
-  if (!chartsContainer) throw new Error('No Chart Container!');
+  if (!chartsContainer) {
+    console.log('No Chart Container!');
+    return;
+  }
 
   const oldHRGraph = getGraphRootNode('Heart Rate');
-  if (!oldHRGraph) throw new Error('No HR Graph!');
+  if (!oldHRGraph) {
+    console.log('No HR Graph!');
+    return;
+  }
 
   const newHRGraph = chart(message.heartRate, heartZones, polarColors);
   chartsContainer.replaceChild(newHRGraph, oldHRGraph);
 
   if (!message.power) return;
   const oldPowerGraph = getGraphRootNode('Power');
-  if (!oldPowerGraph) throw new Error('No Power Graph!');
+  if (!oldPowerGraph) {
+    console.log('No Power Graph!');
+    return;
+  }
 
   const newPowerGraph = chart(message.power, powerZones, strydColors, 0.5);
   chartsContainer.replaceChild(newPowerGraph, oldPowerGraph);
 }
 
-browser.runtime.connect().onMessage.addListener(message => {
+const connection = browser.runtime.connect();
+connection.onMessage.addListener(message => {
   if (!('heartRate' in message)) return;
   handleActivityData(message as ActivityEntry);
+});
+window.addEventListener('beforeunload', () => {
+  connection.postMessage({ unload: true });
 });
