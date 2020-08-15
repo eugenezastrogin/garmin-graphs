@@ -1,74 +1,26 @@
-import { Color, Zone, ActivityData } from './types';
+import { APIActivity, ActivityData, Filter, TabData } from './types';
 
 const hrZones =
   'https://connect.garmin.com/modern/proxy/biometric-service/heartRateZones/*';
 const activity =
   'https://connect.garmin.com/modern/proxy/activity-service/activity/*/details?*';
 const strydZonesDataFieldID = '18fb2cf0-1a4b-430d-ad66-988c847421f4';
+const filter = {
+  url: [{ hostContains: 'connect.garmin.com' }],
+};
 const activityData: ActivityData = {};
+const tabData: TabData = {};
 
-function activityDataSniffer(
-  details: browser.webRequest._OnBeforeRequestDetails,
-) {
-  const filter = browser.webRequest.filterResponseData(details.requestId);
-  const decoder = new TextDecoder('utf-8');
-
-  let data = [];
-  filter.ondata = event => {
-    data.push(event.data);
-    filter.write(event.data);
-  };
-
-  filter.onstop = () => {
-    let str = '';
-    if (data.length == 1) {
-      str = decoder.decode(data[0]);
-    } else {
-      for (let i = 0; i < data.length; i++) {
-        let stream = i == data.length - 1 ? false : true;
-        str += decoder.decode(data[i], { stream });
-      }
-    }
-
-    const { activityId, metricDescriptors, activityDetailMetrics } = JSON.parse(
-      str,
-    );
-    const powerMetric = metricDescriptors.find(
-      ({ appID }) => appID && appID === strydZonesDataFieldID,
-    );
-    const hrMetric = metricDescriptors.find(
-      ({ key }) => key === 'directHeartRate',
-    );
-    const secsElapsedMetric = metricDescriptors.find(
-      ({ key }) => key === 'sumElapsedDuration',
-    );
-    if (!hrMetric || !secsElapsedMetric) throw new Error('no HR!');
-    const { metricsIndex: hrIndex } = hrMetric;
-    const { metricsIndex: powerIndex } = powerMetric;
-    const { metricsIndex: secsIndex } = secsElapsedMetric;
-    const heartRate = activityDetailMetrics.map(({ metrics }) => [
-      metrics[secsIndex],
-      metrics[hrIndex],
-    ]);
-    const power = activityDetailMetrics.map(({ metrics }) => [
-      metrics[secsIndex],
-      metrics[powerIndex],
-    ]);
-    activityData[activityId] = { heartRate, power };
-    filter.close();
-  };
-
-  return {};
-}
-
-const dataSniffer = <T>(cb: (d: T) => void) => (
+const dataSniffer = (cb: (d: string) => void) => (
   details: browser.webRequest._OnBeforeRequestDetails,
 ) => {
-  const filter: any = browser.webRequest.filterResponseData(details.requestId);
+  const filter = browser.webRequest.filterResponseData(
+    details.requestId,
+  ) as Filter;
   const decoder = new TextDecoder('utf-8');
 
-  const data: any[] = [];
-  filter.ondata = (event: any) => {
+  const data: ArrayBuffer[] = [];
+  filter.ondata = (event: { data: ArrayBuffer }) => {
     data.push(event.data);
     filter.write(event.data);
   };
@@ -83,13 +35,58 @@ const dataSniffer = <T>(cb: (d: T) => void) => (
         str += decoder.decode(data[i], { stream });
       }
     }
-
-    cb(JSON.parse(str));
     filter.close();
+    cb(str);
   };
 
   return {};
 };
+
+function activityDataCallback(data: string) {
+  console.log('ACTIVITY SNIFFED');
+  const {
+    activityId: _activityId,
+    metricDescriptors,
+    activityDetailMetrics,
+  } = JSON.parse(data) as APIActivity;
+  const activityId = String(_activityId);
+  const powerMetric = metricDescriptors.find(
+    ({ appID }) => appID && appID === strydZonesDataFieldID,
+  );
+  const hrMetric = metricDescriptors.find(
+    ({ key }) => key === 'directHeartRate',
+  );
+  const secsElapsedMetric = metricDescriptors.find(
+    ({ key }) => key === 'sumElapsedDuration',
+  );
+  if (!hrMetric || !secsElapsedMetric) throw new Error('no HR!');
+  const { metricsIndex: hrIndex } = hrMetric;
+  const { metricsIndex: secsIndex } = secsElapsedMetric;
+  const heartRate: [
+    number,
+    number,
+  ][] = activityDetailMetrics.map(({ metrics }) => [
+    metrics[secsIndex],
+    metrics[hrIndex],
+  ]);
+  if (!powerMetric) {
+    activityData[activityId] = { heartRate };
+  } else {
+    const { metricsIndex: powerIndex } = powerMetric;
+    const power: [
+      number,
+      number,
+    ][] = activityDetailMetrics.map(({ metrics }) => [
+      metrics[secsIndex],
+      metrics[powerIndex],
+    ]);
+    activityData[activityId] = { heartRate, power };
+  }
+  // Broadcast activity data to all relevant tabs
+  Object.values(tabData)
+    .filter(({ activity }) => activity && activity === activityId)
+    .forEach(({ port }) => port.postMessage(activityData[activityId]));
+}
 
 browser.webRequest.onBeforeRequest.addListener(
   dataSniffer(d => console.log(d)),
@@ -97,28 +94,38 @@ browser.webRequest.onBeforeRequest.addListener(
   ['blocking'],
 );
 browser.webRequest.onBeforeRequest.addListener(
-  activityDataSniffer,
+  dataSniffer(activityDataCallback),
   { urls: [activity] },
   ['blocking'],
 );
 
-function handleMessage(
-  { id }: { id: string },
-  _: browser.runtime.MessageSender,
-  sendResponse: (response?: any) => void,
-) {
-  console.log('REQUESTED ACTIVITY: ', id);
-  const int = setInterval(() => {
-    if (id in activityData) {
-      console.log('ENTRY FOUND!');
-      const { power, heartRate } = activityData[id];
-      sendResponse({ heartRate, power });
-      clearInterval(int);
-    } else {
-      console.log('DATA NOT READY');
-    }
-  }, 100);
-  return true;
+function getActivityID(url: string): string | null {
+  const extractedID = url.match(/\/activity\/(\d+)/)?.[1];
+  if (!extractedID) return null;
+  return extractedID;
 }
 
-browser.runtime.onMessage.addListener(handleMessage);
+function handleNewConnection(port: browser.runtime.Port) {
+  console.log('Establishing connection');
+  if (!port.sender || !port.sender.tab || !port.sender.tab.id) return;
+  tabData[port.sender.tab.id] = { port, activity: null };
+
+  const { url, tab } = port.sender;
+  if (!url || !tab) return;
+  const maybeActivity = getActivityID(url);
+  if (!maybeActivity || !tab || !tab.id) {
+    console.log('Garmin page found, non-activity page');
+    return;
+  }
+  console.log(`ACTIVITY ${maybeActivity} found in CONNECTION tab ${tab.id}`);
+  tabData[tab.id].activity = maybeActivity;
+}
+
+browser.runtime.onConnect.addListener(handleNewConnection);
+
+browser.webNavigation.onHistoryStateUpdated.addListener(({ tabId, url }) => {
+  const maybeActivity = getActivityID(url);
+  if (!maybeActivity) return;
+  console.log(`ACTIVITY ${maybeActivity} found in tab ${tabId}`);
+  tabData[tabId].activity = maybeActivity;
+}, filter);

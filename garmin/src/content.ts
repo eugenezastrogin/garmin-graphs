@@ -97,30 +97,35 @@ function chart(data: Data, zones: Zone[], colors: Color[], opacity = 1) {
   return svg.node()!;
 }
 
-function handleResponse(message: ActivityEntry) {
-  const oldDiv = [...document.querySelectorAll('.chart-title')].filter(
-    el => el.innerText === 'Heart Rate',
-  )[0].parentElement.parentElement.parentElement.parentElement!;
-  const root = oldDiv.parentElement!;
-  const graph = chart(message.heartRate, heartZones, polarColors);
-  root.replaceChild(graph, oldDiv);
-
-  const oldDiv2 = [...document.querySelectorAll('.chart-title')].filter(
-    el => el.innerText === 'Power',
-  )[0].parentElement.parentElement.parentElement.parentElement!;
-  const graph2 = chart(message.power!, powerZones, strydColors, 0.5);
-  root.replaceChild(graph2, oldDiv2);
+function getGraphRootNode(name: string): HTMLDivElement | undefined {
+  const allCharts = document.querySelectorAll<HTMLDivElement>('.chart-title');
+  const requestedChart = Array.from(allCharts).filter(
+    el => el.innerText === name,
+  );
+  if (!requestedChart.length) return undefined;
+  return requestedChart[0].parentElement?.parentElement?.parentElement
+    ?.parentElement as HTMLDivElement;
 }
 
-function handleError(error: any) {
-  console.log(`Error: ${error}`);
+function handleActivityData(message: ActivityEntry) {
+  const chartsContainer = document.getElementById('charts-container');
+  if (!chartsContainer) throw new Error('No Chart Container!');
+
+  const oldHRGraph = getGraphRootNode('Heart Rate');
+  if (!oldHRGraph) throw new Error('No HR Graph!');
+
+  const newHRGraph = chart(message.heartRate, heartZones, polarColors);
+  chartsContainer.replaceChild(newHRGraph, oldHRGraph);
+
+  if (!message.power) return;
+  const oldPowerGraph = getGraphRootNode('Power');
+  if (!oldPowerGraph) throw new Error('No Power Graph!');
+
+  const newPowerGraph = chart(message.power, powerZones, strydColors, 0.5);
+  chartsContainer.replaceChild(newPowerGraph, oldPowerGraph);
 }
 
-function notifyBackgroundPage() {
-  const sending = browser.runtime.sendMessage({
-    id: location.pathname.match(/\/\d+/)![0].slice(1),
-  });
-  sending.then(handleResponse, handleError);
-}
-
-window.addEventListener('load', notifyBackgroundPage);
+browser.runtime.connect().onMessage.addListener(message => {
+  if (!('heartRate' in message)) return;
+  handleActivityData(message as ActivityEntry);
+});
