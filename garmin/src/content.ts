@@ -1,4 +1,4 @@
-import { Color, Zone, Data, ActivityEntry } from './types';
+import { Color, Zone, Data, ActivityEntry, Zones } from './types';
 
 const polarColors: Color[] = [
   '#ecadc4',
@@ -14,21 +14,16 @@ const strydColors: Color[] = [
   '#00bafd',
   '#00fa15',
 ];
-const heartZones: Zone[] = [
-  [190, 171],
-  [171, 152],
-  [152, 133],
-  [133, 114],
-  [114, 95],
-];
-const powerZones: Zone[] = [
-  [400, 325],
-  [325, 282],
-  [282, 254],
-  [254, 226],
-  [226, 183],
-];
-function chart(data: Data, zones: Zone[], colors: Color[], opacity = 1) {
+let heartZones: Zones | null = null;
+let powerZones: Zones | null = [400, 325, 282, 254, 226, 183];
+
+function normalizeZones(zones: Zones): Zone[] {
+  return zones
+    .map((e, i) => [e, zones[i + 1]] as [number, number])
+    .slice(0, -1);
+}
+
+function chart(data: Data, zones: Zones, colors: Color[], opacity = 1) {
   const width = 1000;
   const height = 200;
   const margin = { top: 20, right: 5, bottom: 30, left: 30 };
@@ -69,7 +64,7 @@ function chart(data: Data, zones: Zone[], colors: Color[], opacity = 1) {
       .call(g => g.select('.domain').remove());
   const svg = d3.create('svg').attr('viewBox', [0, 0, width, height]);
 
-  zones.forEach(([ceil, floor], i) => {
+  normalizeZones(zones).forEach(([ceil, floor], i) => {
     svg
       .append('rect')
       .attr('x', x(0))
@@ -120,7 +115,7 @@ function handleActivityData(message: ActivityEntry) {
     return;
   }
 
-  const newHRGraph = chart(message.heartRate, heartZones, polarColors);
+  const newHRGraph = chart(message.heartRate, heartZones!, polarColors);
   chartsContainer.replaceChild(newHRGraph, oldHRGraph);
 
   if (!message.power) return;
@@ -130,15 +125,25 @@ function handleActivityData(message: ActivityEntry) {
     return;
   }
 
-  const newPowerGraph = chart(message.power, powerZones, strydColors, 0.5);
+  const newPowerGraph = chart(message.power, powerZones!, strydColors, 0.5);
   chartsContainer.replaceChild(newPowerGraph, oldPowerGraph);
 }
 
-const connection = browser.runtime.connect();
-connection.onMessage.addListener(message => {
-  if (!('heartRate' in message)) return;
-  handleActivityData(message as ActivityEntry);
-});
-window.addEventListener('beforeunload', () => {
-  connection.postMessage({ unload: true });
-});
+function init() {
+  browser.storage.sync
+    .get({ hrZones: [190, 171, 152, 133, 114, 95] })
+    .then(({ hrZones }) => {
+      heartZones = hrZones as Zones;
+    });
+
+  const connection = browser.runtime.connect();
+  connection.onMessage.addListener(message => {
+    if (!('heartRate' in message)) return;
+    handleActivityData(message as ActivityEntry);
+  });
+  window.addEventListener('beforeunload', () => {
+    connection.postMessage({ unload: true });
+  });
+}
+
+init();

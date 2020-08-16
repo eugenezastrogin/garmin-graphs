@@ -2,9 +2,11 @@ import {
   APIActivity,
   APIActivityMeta,
   APIUserMeta,
+  APIHeartZones,
   ActivityData,
   Filter,
   TabData,
+  Zones,
 } from './types';
 
 const hrZones =
@@ -81,7 +83,40 @@ function handleActivityMeta(data: string) {
   }
 }
 
-function userMetaCallback(data: string) {
+function handleHeartZones(data: string) {
+  try {
+    const zoneData = JSON.parse(data) as APIHeartZones;
+    const runningZones = zoneData.find(el => el.sport === 'RUNNING');
+    const defaultZones = zoneData.find(el => el.sport === 'DEFAULT');
+    const hrZoneData = runningZones ?? defaultZones;
+    if (!hrZoneData) {
+      console.log('No valid Zone data!');
+      return;
+    }
+    const {
+      zone1Floor,
+      zone2Floor,
+      zone3Floor,
+      zone4Floor,
+      zone5Floor,
+      maxHeartRateUsed,
+    } = hrZoneData;
+    const hrZones: Zones = [
+      maxHeartRateUsed,
+      zone5Floor,
+      zone4Floor,
+      zone3Floor,
+      zone2Floor,
+      zone1Floor,
+    ];
+    browser.storage.sync.set({ hrZones });
+    console.log(`HR Zones Data found: ${hrZones}`);
+  } catch (e) {
+    console.log(`Error: ${e} when processing: ${data} as heart zones`);
+  }
+}
+
+function handleUserMeta(data: string) {
   try {
     const { id } = JSON.parse(data) as APIUserMeta;
     if (id !== currentUserID) {
@@ -194,18 +229,18 @@ function handleNewConnection(port: browser.runtime.Port) {
 }
 
 function init() {
-  browser.storage.local.get('userID').then(res => {
+  browser.storage.sync.get('userID').then(res => {
     if ('userID' in res) {
       currentUserID = res.userID;
     }
   });
   browser.webRequest.onBeforeRequest.addListener(
-    dataSniffer(d => console.log(d)),
+    dataSniffer(handleHeartZones),
     { urls: [hrZones] },
     ['blocking'],
   );
   browser.webRequest.onBeforeRequest.addListener(
-    dataSniffer(userMetaCallback),
+    dataSniffer(handleUserMeta),
     { urls: [userMeta] },
     ['blocking'],
   );
