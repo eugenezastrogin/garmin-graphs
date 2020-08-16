@@ -52,7 +52,11 @@ function chart(data: Data, zones: Zones, colors: Color[], opacity = 1) {
           ),
       )
       .call(g => g.select('.domain').remove());
-  const yExtent = d3.extent(data, d => d[1]);
+  const yExtent = [
+    // Trim downward spikes
+    d3.quantile(data.map(d => d[1]).sort(d3.ascending), 0.02),
+    d3.max(data, d => d[1]),
+  ];
   const y = d3
     .scaleLinear()
     .domain(yExtent)
