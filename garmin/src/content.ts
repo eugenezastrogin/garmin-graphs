@@ -15,7 +15,7 @@ const strydColors: Color[] = [
   '#00fa15',
 ];
 let heartZones: Zones | null = null;
-let powerZones: Zones | null = [400, 325, 282, 254, 226, 183];
+let powerZones: Zones | null = null;
 
 function normalizeZones(zones: Zones): Zone[] {
   return zones
@@ -109,24 +109,30 @@ function handleActivityData(message: ActivityEntry) {
     return;
   }
 
-  const oldHRGraph = getGraphRootNode('Heart Rate');
-  if (!oldHRGraph) {
-    console.log('No HR Graph!');
-    return;
-  }
+  browser.storage.sync.get('overrideHR').then(({ overrideHR }) => {
+    if (!overrideHR) return;
+    const oldHRGraph = getGraphRootNode('Heart Rate');
+    if (!oldHRGraph) {
+      console.log('No HR Graph!');
+      return;
+    }
 
-  const newHRGraph = chart(message.heartRate, heartZones!, polarColors);
-  chartsContainer.replaceChild(newHRGraph, oldHRGraph);
+    const newHRGraph = chart(message.heartRate, heartZones!, polarColors);
+    chartsContainer.replaceChild(newHRGraph, oldHRGraph);
+  });
 
-  if (!message.power) return;
-  const oldPowerGraph = getGraphRootNode('Power');
-  if (!oldPowerGraph) {
-    console.log('No Power Graph!');
-    return;
-  }
+  browser.storage.sync.get('overridePower').then(({ overridePower }) => {
+    if (!overridePower) return;
+    if (!message.power) return;
+    const oldPowerGraph = getGraphRootNode('Power');
+    if (!oldPowerGraph) {
+      console.log('No Power Graph!');
+      return;
+    }
 
-  const newPowerGraph = chart(message.power, powerZones!, strydColors, 0.5);
-  chartsContainer.replaceChild(newPowerGraph, oldPowerGraph);
+    const newPowerGraph = chart(message.power, powerZones!, strydColors, 0.5);
+    chartsContainer.replaceChild(newPowerGraph, oldPowerGraph);
+  });
 }
 
 function init() {
@@ -135,6 +141,16 @@ function init() {
     .then(({ hrZones }) => {
       heartZones = hrZones as Zones;
     });
+  browser.storage.sync.get('criticalPower').then(({ criticalPower }) => {
+    powerZones = [
+      3 * criticalPower,
+      1.15 * criticalPower,
+      criticalPower,
+      0.9 * criticalPower,
+      0.8 * criticalPower,
+      0.65 * criticalPower,
+    ];
+  });
 
   const connection = browser.runtime.connect();
   connection.onMessage.addListener(message => {

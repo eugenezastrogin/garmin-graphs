@@ -19,12 +19,6 @@
     "https://connect.garmin.com/modern/proxy/biometric-service/heartRateZones/*"
   ],
 
-  "browser_action": {
-    "default_icon": "images/icon32.png",
-    "default_title": "GarminGraphs",
-    "default_popup": "options.html"
-  },
-
   "content_scripts": [
     {
       "matches": ["https://connect.garmin.com/*"],
@@ -34,6 +28,11 @@
 
   "background": {
     "scripts": ["scripts/background.js"]
+  },
+
+  "options_ui": {
+    "page": "options.html",
+    "browser_style": true
   },
 
   "browser_specific_settings": {

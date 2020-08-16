@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      button {
+        height: 30px;
+        width: 60px;
+        outline: none;
+        margin: 10px;
+      }
+      input[type='text'] {
+        width: 30px;
+      }
+    </style>
+    <title>Garmin Graphs Options</title>
+  </head>
+  <body>
+    <label for="criticalPower">
+      Critical Power (used to calculate Power Zones)
+    </label>
+    <input type="number" id="criticalPower" name="criticalPower" />
+    <br /><br />
+
+    <label for="overrideHR">Override Heart Rate Graph</label>
+    <input type="checkbox" id="overrideHR" name="overrideHR" />
+    <br /><br />
+
+    <label for="overridePower">Override Power Graph</label>
+    <input type="checkbox" id="overridePower" name="overridePower" />
+    <br /><br />
+
+    <div id="status"></div>
+    <button id="save">Save</button>
+
+    <script src="scripts/options.js"></script>
+  </body>
+</html>
