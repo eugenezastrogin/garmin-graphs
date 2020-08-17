@@ -28,12 +28,6 @@ function chart(data: Data, zones: Zones, colors: Color[], opacity = 1) {
   const height = 200;
   const margin = { top: 20, right: 5, bottom: 30, left: 30 };
 
-  const line = d3
-    .line()
-    .curve(d3.curveStep)
-    .defined(d => !isNaN(d[1]))
-    .x(d => x(d[0]))
-    .y(d => y(d[1]));
   const xExtent = d3.extent(data, d => d[0]);
   const x = d3
     .scaleLinear()
@@ -51,7 +45,6 @@ function chart(data: Data, zones: Zones, colors: Color[], opacity = 1) {
             new Date(n * 1000).toISOString().substr(11, 8).replace(/^0+:/, ''),
           ),
       )
-      .call(g => g.select('.domain').remove());
   const yExtent = [
     // Trim downward spikes
     d3.quantile(data.map(d => d[1]).sort(d3.ascending), 0.02),
@@ -65,16 +58,20 @@ function chart(data: Data, zones: Zones, colors: Color[], opacity = 1) {
     g
       .attr('transform', `translate(${margin.left},0)`)
       .call(d3.axisLeft(y))
-      .call(g => g.select('.domain').remove());
   const svg = d3.create('svg').attr('viewBox', [0, 0, width, height]);
 
   normalizeZones(zones).forEach(([ceil, floor], i) => {
+    if (floor < yExtent[0] && ceil < yExtent[0]) return;
+    if (floor > yExtent[1] && ceil > yExtent[1]) return;
+    const minimumY = Math.max(y(ceil), y(yExtent[1]));
+
     svg
       .append('rect')
       .attr('x', x(0))
       .attr('y', y(ceil))
+      .attr('y', minimumY)
       .attr('width', x(xExtent[1]!) - x(0))
-      .attr('height', y(floor) - y(ceil))
+      .attr('height', Math.min(y(floor) - minimumY, y(yExtent[0]!) - minimumY))
       .attr('fill', colors[i])
       .attr('opacity', opacity);
   });
@@ -83,9 +80,26 @@ function chart(data: Data, zones: Zones, colors: Color[], opacity = 1) {
 
   svg.append('g').call(yAxis);
 
+  const yAverage = d3.mean(data, d => d[1]);
+  const line = d3
+    .line()
+    .curve(d3.curveStep)
+    .x(d => x(d[0]))
+    .y(d => y(d[1]));
+  svg
+    .append('line')
+    .attr('x1', 0)
+    .attr('x2', width)
+    .attr('y1', yAverage)
+    .attr('y2', yAverage)
+    .attr('fill', 'none')
+    .attr('stroke', 'gray')
+    .attr('stroke-dasharray', '10 10')
+    .attr('stroke-width', 1);
+
   svg
     .append('path')
-    .datum(data)
+    .datum(data.map(([x, y]) => [x, Math.max(y, yExtent[0])]))
     .attr('fill', 'none')
     .attr('stroke', '#cc3f5e')
     .attr('stroke-width', 1.5)
