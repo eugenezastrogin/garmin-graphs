@@ -31,10 +31,18 @@ function normalizeZones(zones: Zones): Zone[] {
     .slice(0, -1);
 }
 
-function chart(data: Data, zones: Zones, colors: Color[], opacity = 1) {
+function chart(
+  data: Data,
+  zones: Zones,
+  colors: Color[],
+  opacity = 1,
+  scaleToData = true,
+) {
+  log('Generating graph...');
   const width = 1000;
   const height = 200;
   const margin = { top: 20, right: 5, bottom: 30, left: 30 };
+  const yAverage = d3.mean(data, d => d[1]);
 
   const xExtent = d3.extent(data, d => d[0]);
   const x = d3
@@ -42,22 +50,26 @@ function chart(data: Data, zones: Zones, colors: Color[], opacity = 1) {
     .domain(xExtent)
     .range([margin.left, width - margin.right]);
   const xAxis = (g: d3.Selection<SVGGElement, undefined, null, undefined>) =>
-    g
-      .attr('transform', `translate(0,${height - margin.bottom})`)
-      .call(
-        d3
-          .axisBottom(x)
-          .ticks(10)
-          .tickSizeOuter(0)
-          .tickFormat(n =>
-            new Date(n * 1000).toISOString().substr(11, 8).replace(/^0+:/, ''),
-          ),
-      )
-  const yExtent = [
-    // Trim downward spikes
-    d3.quantile(data.map(d => d[1]).sort(d3.ascending), 0.02),
-    d3.max(data, d => d[1]),
-  ];
+    g.attr('transform', `translate(0,${height - margin.bottom})`).call(
+      d3
+        .axisBottom(x)
+        .ticks(10)
+        .tickSizeOuter(0)
+        .tickFormat(n =>
+          new Date(n * 1000).toISOString().substr(11, 8).replace(/^0+:/, ''),
+        ),
+    );
+  const yExtent = scaleToData
+    ? [
+        // Trim downward spikes
+        Math.max(
+          0,
+          d3.quantile(data.map(d => d[1]).sort(d3.ascending), 0.02) - 30,
+        ),
+        // d3.min(data, d => d[1]) - 40,
+        d3.max(data, d => d[1]) + 40,
+      ]
+    : [zones[5], zones[0]];
   const y = d3
     .scaleLinear()
     .domain(yExtent)
@@ -65,7 +77,7 @@ function chart(data: Data, zones: Zones, colors: Color[], opacity = 1) {
   const yAxis = (g: d3.Selection<SVGGElement, undefined, null, undefined>) =>
     g
       .attr('transform', `translate(${margin.left},0)`)
-      .call(d3.axisLeft(y))
+      .call(d3.axisLeft(y).tickValues([...y.ticks(6), yAverage]));
   const svg = d3.create('svg').attr('viewBox', [0, 0, width, height]);
 
   normalizeZones(zones).forEach(([ceil, floor], i) => {
@@ -88,7 +100,6 @@ function chart(data: Data, zones: Zones, colors: Color[], opacity = 1) {
 
   svg.append('g').call(yAxis);
 
-  const yAverage = d3.mean(data, d => d[1]);
   const line = d3
     .line()
     .curve(d3.curveStep)
@@ -96,10 +107,10 @@ function chart(data: Data, zones: Zones, colors: Color[], opacity = 1) {
     .y(d => y(d[1]));
   svg
     .append('line')
-    .attr('x1', 0)
-    .attr('x2', width)
-    .attr('y1', yAverage)
-    .attr('y2', yAverage)
+    .attr('x1', margin.left)
+    .attr('x2', width - margin.right)
+    .attr('y1', y(yAverage))
+    .attr('y2', y(yAverage))
     .attr('fill', 'none')
     .attr('stroke', 'gray')
     .attr('stroke-dasharray', '10 10')
@@ -136,30 +147,42 @@ function handleActivityData(message: ActivityEntry) {
     return;
   }
 
-  browser.storage.sync.get('overrideHR').then(({ overrideHR }) => {
-    if (!overrideHR) return;
-    const oldHRGraph = getGraphRootNode('Heart Rate');
-    if (!oldHRGraph) {
-      console.log('No HR Graph!');
-      return;
-    }
+  browser.storage.sync
+    .get({ overrideHR: true })
+    .then(({ overrideHR }) => {
+      if (!overrideHR) return;
+      const oldHRGraph = getGraphRootNode('Heart Rate');
+      if (!oldHRGraph) {
+        log('No HR Graph!');
+        return;
+      }
 
-    const newHRGraph = chart(message.heartRate, heartZones!, polarColors);
-    chartsContainer.replaceChild(newHRGraph, oldHRGraph);
-  });
+      const newHRGraph = chart(
+        message.heartRate,
+        heartZones!,
+        polarColors,
+        1,
+        false,
+      );
+      chartsContainer.replaceChild(newHRGraph, oldHRGraph);
+    })
+    .catch(e => log(`Error when getting overrideHR state: ${e}`));
 
-  browser.storage.sync.get('overridePower').then(({ overridePower }) => {
-    if (!overridePower) return;
-    if (!message.power) return;
-    const oldPowerGraph = getGraphRootNode('Power');
-    if (!oldPowerGraph) {
-      console.log('No Power Graph!');
-      return;
-    }
+  browser.storage.sync
+    .get({ overridePower: true })
+    .then(({ overridePower }) => {
+      if (!overridePower) return;
+      if (!message.power) return;
+      const oldPowerGraph = getGraphRootNode('Power');
+      if (!oldPowerGraph) {
+        log('No Power Graph!');
+        return;
+      }
 
-    const newPowerGraph = chart(message.power, powerZones!, strydColors, 0.5);
-    chartsContainer.replaceChild(newPowerGraph, oldPowerGraph);
-  });
+      const newPowerGraph = chart(message.power, powerZones!, strydColors, 0.5);
+      chartsContainer.replaceChild(newPowerGraph, oldPowerGraph);
+    })
+    .catch(e => log(`Error when getting overridePower state: ${e}`));
 }
 
 function init() {
