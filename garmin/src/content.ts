@@ -1,5 +1,7 @@
 import { Color, Zone, Data, ActivityEntry, Zones } from './types';
 
+const debug = true;
+
 const polarColors: Color[] = [
   '#ecadc4',
   '#f4e3b1',
@@ -16,6 +18,12 @@ const strydColors: Color[] = [
 ];
 let heartZones: Zones | null = null;
 let powerZones: Zones | null = null;
+
+function log(...message: any[]) {
+  if (debug) {
+    console.log(message);
+  }
+}
 
 function normalizeZones(zones: Zones): Zone[] {
   return zones
@@ -107,6 +115,7 @@ function chart(data: Data, zones: Zones, colors: Color[], opacity = 1) {
     .attr('stroke-linecap', 'round')
     .attr('d', line);
 
+  log('Graph generated!');
   return svg.node()!;
 }
 
@@ -123,7 +132,7 @@ function getGraphRootNode(name: string): HTMLDivElement | undefined {
 function handleActivityData(message: ActivityEntry) {
   const chartsContainer = document.getElementById('charts-container');
   if (!chartsContainer) {
-    console.log('No Chart Container!');
+    log('No Chart Container!');
     return;
   }
 
@@ -172,7 +181,11 @@ function init() {
 
   const connection = browser.runtime.connect();
   connection.onMessage.addListener(message => {
-    if (!('heartRate' in message)) return;
+    if (!('heartRate' in message)) {
+      log(`Missing heartRate in message: ${message}`);
+      return;
+    }
+    log('Message processing...');
     handleActivityData(message as ActivityEntry);
   });
   window.addEventListener('beforeunload', () => {

@@ -9,6 +9,8 @@ import {
   Zones,
 } from './types';
 
+const debug = true;
+
 const hrZones =
   'https://connect.garmin.com/modern/proxy/biometric-service/heartRateZones/*';
 const activity =
@@ -54,10 +56,14 @@ const dataSniffer = (cb: (d: string, url?: string) => void) => (
 
   return {};
 };
-
+function log(...message: any[]) {
+  if (debug) {
+    console.log(message);
+  }
+}
 function activityRouter(data: string, url: string | undefined) {
   if (!url) {
-    console.log('NO URL IN REQUEST HEADER!');
+    log('NO URL IN REQUEST HEADER!');
     return;
   }
   if (url.match(/\/activity\/\d+\?_=\d+/)) {
@@ -71,15 +77,15 @@ function handleActivityMeta(data: string) {
   try {
     const { activityId, userProfileId } = JSON.parse(data) as APIActivityMeta;
     if (currentUserID && userProfileId !== currentUserID) {
-      console.log(
+      log(
         `Marking activity: ${activityId} as belonging to user: ${userProfileId}`,
       );
       activityIDsOfOtherUsers.add(activityId);
     } else {
-      console.log(`Marking own activity: ${activityId}`);
+      log(`Marking own activity: ${activityId}`);
     }
   } catch (e) {
-    console.log(`Error: ${e} when processing ${data} as activity meta`);
+    log(`Error: ${e} when processing ${data} as activity meta`);
   }
 }
 
@@ -90,7 +96,7 @@ function handleHeartZones(data: string) {
     const defaultZones = zoneData.find(el => el.sport === 'DEFAULT');
     const hrZoneData = runningZones ?? defaultZones;
     if (!hrZoneData) {
-      console.log('No valid Zone data!');
+      log('No valid Zone data!');
       return;
     }
     const {
@@ -110,9 +116,9 @@ function handleHeartZones(data: string) {
       zone1Floor,
     ];
     browser.storage.sync.set({ hrZones });
-    console.log(`HR Zones Data found: ${hrZones}`);
+    log(`HR Zones Data found: ${hrZones}`);
   } catch (e) {
-    console.log(`Error: ${e} when processing: ${data} as heart zones`);
+    log(`Error: ${e} when processing: ${data} as heart zones`);
   }
 }
 
@@ -121,19 +127,19 @@ function handleUserMeta(data: string) {
     const { id } = JSON.parse(data) as APIUserMeta;
     if (id !== currentUserID) {
       currentUserID = id;
-      console.log(`USER ID changed: ${id}`);
+      log(`USER ID changed: ${id}`);
       browser.storage.sync.set({
         userID: id,
       });
     }
   } catch (e) {
-    console.log(`Error: ${e} when processing: ${data} as user meta`);
+    log(`Error: ${e} when processing: ${data} as user meta`);
   }
 }
 
 function handleActivityDetails(data: string) {
   try {
-    console.log('ACTIVITY SNIFFED');
+    log('ACTIVITY SNIFFED');
     const {
       activityId: _activityId,
       metricDescriptors,
@@ -141,7 +147,7 @@ function handleActivityDetails(data: string) {
     } = JSON.parse(data) as APIActivity;
     const activityId = String(_activityId);
     if (activityIDsOfOtherUsers.has(_activityId)) {
-      console.log('SKIPPING ACTIVITY PROCESSING OF OTHER USER');
+      log('SKIPPING ACTIVITY PROCESSING OF OTHER USER');
       return;
     }
     const powerMetric = metricDescriptors.find(
@@ -154,7 +160,7 @@ function handleActivityDetails(data: string) {
       ({ key }) => key === 'sumElapsedDuration',
     );
     if (!hrMetric || !secsElapsedMetric) {
-      console.log('no HR!');
+      log('no HR!');
       return;
     }
     const { metricsIndex: hrIndex } = hrMetric;
@@ -184,16 +190,17 @@ function handleActivityDetails(data: string) {
       .filter(([_, { activity }]) => activity && activity === activityId)
       .forEach(([tabID, { port }]) => {
         try {
+          log(`Sending activity data to tab ${tabID}`);
           port.postMessage(activityData[activityId]);
         } catch (e) {
-          console.log(
+          log(
             `Error when sending activity entry, force flush stale data for tab ${tabID}!`,
           );
           delete tabData[Number(tabID)];
         }
       });
   } catch (e) {
-    console.log(`Error: ${e} when processing: ${data} as activity details`);
+    log(`Error: ${e} when processing: ${data} as activity details`);
   }
 }
 
@@ -204,7 +211,7 @@ function getActivityID(url: string): string | null {
 }
 
 function handleNewConnection(port: browser.runtime.Port) {
-  console.log('Establishing connection');
+  log('Establishing connection');
   if (!port.sender || !port.sender.tab || !port.sender.tab.id) return;
   const tabID = port.sender.tab.id;
   tabData[tabID] = { port, activity: null };
@@ -214,17 +221,17 @@ function handleNewConnection(port: browser.runtime.Port) {
 
   port.onMessage.addListener(function (msg: { unload?: boolean }) {
     if ('unload' in msg && msg.unload) {
-      console.log(`Tab ${tabID} was unloaded and removed`);
+      log(`Tab ${tabID} was unloaded and removed`);
       delete tabData[tabID];
     }
   });
 
   const maybeActivity = getActivityID(url);
   if (!maybeActivity || !tab || !tab.id) {
-    console.log('Garmin page found, non-activity page');
+    log('Garmin page found, non-activity page');
     return;
   }
-  console.log(`ACTIVITY ${maybeActivity} found in CONNECTION tab ${tab.id}`);
+  log(`ACTIVITY ${maybeActivity} found in CONNECTION tab ${tab.id}`);
   tabData[tab.id].activity = maybeActivity;
 }
 
@@ -254,7 +261,7 @@ function init() {
   browser.webNavigation.onHistoryStateUpdated.addListener(({ tabId, url }) => {
     const maybeActivity = getActivityID(url);
     if (!maybeActivity) return;
-    console.log(`ACTIVITY ${maybeActivity} found in tab ${tabId}`);
+    log(`ACTIVITY ${maybeActivity} found in tab ${tabId}`);
     tabData[tabId].activity = maybeActivity;
   }, filter);
 }
