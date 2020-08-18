@@ -10,18 +10,18 @@ const polarColors: Color[] = [
   '#e3e5e5',
 ];
 const strydColors: Color[] = [
-  '#dd3e17',
-  '#ff6d00',
-  '#ffb800',
-  '#00bafd',
-  '#00fa15',
+  '#ee9e8a',
+  '#ffb57f',
+  '#ffdb7f',
+  '#7fdcfe',
+  '#7ffc89',
 ];
 let heartZones: Zones | null = null;
 let powerZones: Zones | null = null;
 
 function log(...message: any[]) {
   if (debug) {
-    console.log(message);
+    console.log(...message);
   }
 }
 
@@ -31,13 +31,7 @@ function normalizeZones(zones: Zones): Zone[] {
     .slice(0, -1);
 }
 
-function chart(
-  data: Data,
-  zones: Zones,
-  colors: Color[],
-  opacity = 1,
-  scaleToData = true,
-) {
+function chart(data: Data, zones: Zones, colors: Color[], scaleToData = true) {
   log('Generating graph...');
   const width = 1000;
   const height = 200;
@@ -92,8 +86,7 @@ function chart(
       .attr('y', minimumY)
       .attr('width', x(xExtent[1]!) - x(0))
       .attr('height', Math.min(y(floor) - minimumY, y(yExtent[0]!) - minimumY))
-      .attr('fill', colors[i])
-      .attr('opacity', opacity);
+      .attr('fill', colors[i]);
   });
 
   svg.append('g').call(xAxis);
@@ -141,48 +134,60 @@ function getGraphRootNode(name: string): HTMLDivElement | undefined {
 }
 
 function handleActivityData(message: ActivityEntry) {
-  const chartsContainer = document.getElementById('charts-container');
-  if (!chartsContainer) {
-    log('No Chart Container!');
-    return;
+  function main(chartsContainer: HTMLDivElement) {
+    browser.storage.sync
+      .get({ overrideHR: true })
+      .then(({ overrideHR }) => {
+        if (!overrideHR) return;
+        const oldHRGraph = getGraphRootNode('Heart Rate');
+        if (!oldHRGraph) {
+          log('No HR Graph!');
+          return;
+        }
+
+        const newHRGraph = chart(
+          message.heartRate,
+          heartZones!,
+          polarColors,
+          false,
+        );
+        chartsContainer.replaceChild(newHRGraph, oldHRGraph);
+      })
+      .catch(e => log(`Error when getting overrideHR state: ${e}`));
+
+    browser.storage.sync
+      .get({ overridePower: true })
+      .then(({ overridePower }) => {
+        if (!overridePower) return;
+        if (!message.power) return;
+        const oldPowerGraph = getGraphRootNode('Power');
+        if (!oldPowerGraph) {
+          log('No Power Graph!');
+          return;
+        }
+
+        const newPowerGraph = chart(message.power, powerZones!, strydColors);
+        chartsContainer.replaceChild(newPowerGraph, oldPowerGraph);
+      })
+      .catch(e => log(`Error when getting overridePower state: ${e}`));
   }
 
-  browser.storage.sync
-    .get({ overrideHR: true })
-    .then(({ overrideHR }) => {
-      if (!overrideHR) return;
-      const oldHRGraph = getGraphRootNode('Heart Rate');
-      if (!oldHRGraph) {
-        log('No HR Graph!');
-        return;
-      }
+  let tries = 5;
+  const retryInteval = setInterval(() => {
+    const chartsContainer = document.getElementById('charts-container');
+    if (tries === 0) {
+      clearInterval(retryInteval);
+    }
+    tries -= 1;
 
-      const newHRGraph = chart(
-        message.heartRate,
-        heartZones!,
-        polarColors,
-        1,
-        false,
-      );
-      chartsContainer.replaceChild(newHRGraph, oldHRGraph);
-    })
-    .catch(e => log(`Error when getting overrideHR state: ${e}`));
-
-  browser.storage.sync
-    .get({ overridePower: true })
-    .then(({ overridePower }) => {
-      if (!overridePower) return;
-      if (!message.power) return;
-      const oldPowerGraph = getGraphRootNode('Power');
-      if (!oldPowerGraph) {
-        log('No Power Graph!');
-        return;
-      }
-
-      const newPowerGraph = chart(message.power, powerZones!, strydColors, 0.5);
-      chartsContainer.replaceChild(newPowerGraph, oldPowerGraph);
-    })
-    .catch(e => log(`Error when getting overridePower state: ${e}`));
+    if (chartsContainer) {
+      log('Container found!');
+      clearInterval(retryInteval);
+      main(chartsContainer);
+    } else {
+      log(`No Chart Container! Retrying ${tries} more times...`);
+    }
+  }, 1000);
 }
 
 function init() {

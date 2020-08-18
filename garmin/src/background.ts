@@ -58,7 +58,7 @@ const dataSniffer = (cb: (d: string, url?: string) => void) => (
 };
 function log(...message: any[]) {
   if (debug) {
-    console.log(message);
+    console.log(...message);
   }
 }
 function activityRouter(data: string, url: string | undefined) {
