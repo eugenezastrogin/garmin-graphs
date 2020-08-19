@@ -1,4 +1,4 @@
-import { Color, Zone, Data, ActivityEntry, Zones } from './types';
+import type { Color, Zone, Data, ActivityEntry, Zones } from './types';
 
 const debug = true;
 
@@ -31,11 +31,17 @@ function normalizeZones(zones: Zones): Zone[] {
     .slice(0, -1);
 }
 
-function chart(data: Data, zones: Zones, colors: Color[], scaleToData = true) {
+function chart(
+  data: Data,
+  zones: Zones,
+  colors: Color[],
+  scaleToData = true,
+  graphName = '',
+) {
   log('Generating graph...');
   const width = 1000;
   const height = 200;
-  const margin = { top: 20, right: 5, bottom: 30, left: 30 };
+  const margin = { top: 20, right: 5, bottom: 30, left: 35 };
   const yAverage = d3.mean(data, d => d[1]);
 
   const xExtent = d3.extent(data, d => d[0]);
@@ -58,10 +64,9 @@ function chart(data: Data, zones: Zones, colors: Color[], scaleToData = true) {
         // Trim downward spikes
         Math.max(
           0,
-          d3.quantile(data.map(d => d[1]).sort(d3.ascending), 0.02) - 30,
+          d3.quantile(data.map(d => d[1]).sort(d3.ascending), 0.02) - 20,
         ),
-        // d3.min(data, d => d[1]) - 40,
-        d3.max(data, d => d[1]) + 40,
+        d3.max(data, d => d[1]) + 20,
       ]
     : [zones[5], zones[0]];
   const y = d3
@@ -71,7 +76,16 @@ function chart(data: Data, zones: Zones, colors: Color[], scaleToData = true) {
   const yAxis = (g: d3.Selection<SVGGElement, undefined, null, undefined>) =>
     g
       .attr('transform', `translate(${margin.left},0)`)
-      .call(d3.axisLeft(y).tickValues([...y.ticks(6), yAverage]));
+      .call(d3.axisLeft(y).tickValues([...zones].reverse()))
+      .call(g =>
+        g
+          .append('text')
+          .attr('x', 0)
+          .attr('y', 10)
+          .attr('fill', 'currentColor')
+          .attr('text-anchor', 'start')
+          .text(`${graphName} (AVG: ${Math.ceil(yAverage)})`),
+      );
   const svg = d3.create('svg').attr('viewBox', [0, 0, width, height]);
 
   normalizeZones(zones).forEach(([ceil, floor], i) => {
@@ -150,6 +164,7 @@ function handleActivityData(message: ActivityEntry) {
           heartZones!,
           polarColors,
           false,
+          'Heart Rate',
         );
         chartsContainer.replaceChild(newHRGraph, oldHRGraph);
       })
@@ -166,13 +181,19 @@ function handleActivityData(message: ActivityEntry) {
           return;
         }
 
-        const newPowerGraph = chart(message.power, powerZones!, strydColors);
+        const newPowerGraph = chart(
+          message.power,
+          powerZones!,
+          strydColors,
+          true,
+          'Power',
+        );
         chartsContainer.replaceChild(newPowerGraph, oldPowerGraph);
       })
       .catch(e => log(`Error when getting overridePower state: ${e}`));
   }
 
-  let tries = 5;
+  let tries = 15;
   const retryInteval = setInterval(() => {
     const chartsContainer = document.getElementById('charts-container');
     if (tries === 0) {
@@ -185,7 +206,7 @@ function handleActivityData(message: ActivityEntry) {
       clearInterval(retryInteval);
       main(chartsContainer);
     } else {
-      log(`No Chart Container! Retrying ${tries} more times...`);
+      log(`No Chart Container! Retrying ${tries + 1} more times...`);
     }
   }, 1000);
 }
