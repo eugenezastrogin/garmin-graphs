@@ -147,6 +147,20 @@ function getGraphRootNode(name: string): HTMLDivElement | undefined {
     ?.parentElement as HTMLDivElement;
 }
 
+function getGraphRootNodeByCircleColor(
+  color: string,
+): HTMLDivElement | undefined {
+  const allCharts = document.querySelectorAll<HTMLDivElement>(
+    '.chart-color-circle',
+  );
+  const requestedChart = Array.from(allCharts).filter(
+    el => el.style.backgroundColor === color,
+  );
+  if (!requestedChart.length) return undefined;
+  return requestedChart[0].parentElement?.parentElement?.parentElement
+    ?.parentElement as HTMLDivElement;
+}
+
 function wrapChart(
   chartsContainer: HTMLDivElement,
   oldChart: HTMLDivElement,
@@ -189,7 +203,7 @@ function handleActivityData(message: ActivityEntry) {
       .get({ overrideHR: true })
       .then(({ overrideHR }) => {
         if (!overrideHR) return;
-        const oldHRGraph = getGraphRootNode('Heart Rate');
+        const oldHRGraph = getGraphRootNodeByCircleColor('rgb(255, 0, 53)');
         if (!oldHRGraph) {
           log('No HR Graph!');
           return;
