@@ -24,7 +24,9 @@ const filter = {
 const activityData: ActivityData = {};
 const tabData: TabData = {};
 const activityIDsOfOtherUsers = new Set<number>();
+const runningActivites = new Set<number>();
 let currentUserID: null | number = null;
+let overrideRunsOnly = false;
 
 const dataSniffer = (cb: (d: string, url?: string) => void) => (
   details: browser.webRequest._OnBeforeRequestDetails,
@@ -75,7 +77,10 @@ function activityRouter(data: string, url: string | undefined) {
 
 function handleActivityMeta(data: string) {
   try {
-    const { activityId, userProfileId } = JSON.parse(data) as APIActivityMeta;
+    const { activityTypeDTO, activityId, userProfileId } = JSON.parse(
+      data,
+    ) as APIActivityMeta;
+    const isRunning = activityTypeDTO.parentTypeId === 1;
     if (currentUserID && userProfileId !== currentUserID) {
       log(
         `Marking activity: ${activityId} as belonging to user: ${userProfileId}`,
@@ -83,6 +88,10 @@ function handleActivityMeta(data: string) {
       activityIDsOfOtherUsers.add(activityId);
     } else {
       log(`Marking own activity: ${activityId}`);
+      if (isRunning) {
+        runningActivites.add(activityId);
+        log('Marking activity as running');
+      }
     }
   } catch (e) {
     log(`Error: ${e} when processing ${data} as activity meta`);
@@ -148,6 +157,10 @@ function handleActivityDetails(data: string) {
     const activityId = String(_activityId);
     if (activityIDsOfOtherUsers.has(_activityId)) {
       log('SKIPPING ACTIVITY PROCESSING OF OTHER USER');
+      return;
+    }
+    if (overrideRunsOnly && !runningActivites.has(_activityId)) {
+      log('Non-running activity! Skipping...');
       return;
     }
     const powerMetric = metricDescriptors.find(
@@ -240,6 +253,9 @@ function init() {
     if ('userID' in res) {
       currentUserID = res.userID;
     }
+  });
+  browser.storage.sync.get({ overrideRunsOnly: false }).then(res => {
+    overrideRunsOnly = res.overrideRunsOnly;
   });
   browser.webRequest.onBeforeRequest.addListener(
     dataSniffer(handleHeartZones),

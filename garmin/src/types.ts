@@ -21,6 +21,12 @@ export type APIUserMeta = {
 export type APIActivityMeta = {
   activityId: number;
   userProfileId: number;
+  activityTypeDTO: {
+    parentTypeId: number;
+    sortOrder: 20;
+    typeId: number;
+    typeKey: string;
+  };
 };
 export type APIHeartZones = {
   trainingMethod: 'HR_MAX' | 'LACTATE_THRESHOLD' | 'HR_RESERVE';
