@@ -175,10 +175,9 @@ function wrapChart(
   switcher.style.right = '0';
   switcher.style.top = '0';
   switcher.innerText = 'Switch graph';
-  switcher.style.border = '1px solid black';
-  switcher.style.borderRadius = '3px';
-  switcher.style.backgroundColor = 'lightgray';
-  switcher.style.padding = '3px';
+  switcher.style.border = '1px solid #ccc';
+  switcher.style.borderRadius = '4px';
+  switcher.style.padding = '5px';
   switcher.style.lineHeight = '1';
   switcher.onclick = () => {
     if (oldChart.style.display === 'none') {
