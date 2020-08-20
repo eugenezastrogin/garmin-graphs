@@ -147,6 +147,42 @@ function getGraphRootNode(name: string): HTMLDivElement | undefined {
     ?.parentElement as HTMLDivElement;
 }
 
+function wrapChart(
+  chartsContainer: HTMLDivElement,
+  oldChart: HTMLDivElement,
+  newChart: SVGSVGElement,
+) {
+  const wrapper = document.createElement('div');
+  wrapper.style.position = 'relative';
+  wrapper.style.paddingTop = '20px';
+
+  const switcher = document.createElement('button');
+  switcher.style.position = 'absolute';
+  switcher.style.right = '0';
+  switcher.style.top = '0';
+  switcher.innerText = 'Switch graph';
+  switcher.style.border = '1px solid black';
+  switcher.style.borderRadius = '3px';
+  switcher.style.backgroundColor = 'lightgray';
+  switcher.style.padding = '3px';
+  switcher.style.lineHeight = '1';
+  switcher.onclick = () => {
+    if (oldChart.style.display === 'none') {
+      oldChart.style.display = 'block';
+      newChart.style.display = 'none';
+    } else {
+      oldChart.style.display = 'none';
+      newChart.style.display = 'block';
+    }
+  };
+
+  wrapper.appendChild(switcher);
+  wrapper.appendChild(newChart);
+  chartsContainer.replaceChild(wrapper, oldChart);
+  wrapper.appendChild(oldChart);
+  oldChart.style.display = 'none';
+}
+
 function handleActivityData(message: ActivityEntry) {
   function main(chartsContainer: HTMLDivElement) {
     browser.storage.sync
@@ -166,7 +202,7 @@ function handleActivityData(message: ActivityEntry) {
           false,
           'Heart Rate',
         );
-        chartsContainer.replaceChild(newHRGraph, oldHRGraph);
+        wrapChart(chartsContainer, oldHRGraph, newHRGraph);
       })
       .catch(e => log(`Error when getting overrideHR state: ${e}`));
 
@@ -188,7 +224,7 @@ function handleActivityData(message: ActivityEntry) {
           true,
           'Power',
         );
-        chartsContainer.replaceChild(newPowerGraph, oldPowerGraph);
+        wrapChart(chartsContainer, oldPowerGraph, newPowerGraph);
       })
       .catch(e => log(`Error when getting overridePower state: ${e}`));
   }
