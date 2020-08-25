@@ -8,6 +8,10 @@ const html = htm.bind(h);
 function App() {
   const [useDefaultHRColors, setUseDefaultHRColors] = useState(true);
   const [useDefaultPowerColors, setUseDefaultPowerColors] = useState(true);
+
+  const [showSuccess, setShowSuccess] = useState(null);
+  const [showError, setShowError] = useState(null);
+
   const [overrideHR, setOverrideHR] = useState(null);
   const [overrideRunsOnly, setOverrideRunsOnly] = useState(null);
   const [overridePower, setOverridePower] = useState(null);
@@ -46,18 +50,15 @@ function App() {
         hrZone5Color,
       })
       .then(() => {
-        // Update status to let user know options were saved.
-        const status = document.getElementById('status') as HTMLDivElement;
-        status.textContent = 'Options saved.';
+        setShowSuccess(true);
         setTimeout(function () {
-          status.textContent = '';
+          setShowSuccess(false);
         }, 1000);
       }),
       e => {
-        const status = document.getElementById('status') as HTMLDivElement;
-        status.textContent = `Error: ${e} when saving options`;
+        setShowError(true);
         setTimeout(function () {
-          status.textContent = '';
+          setShowError(false);
         }, 1000);
       };
   }
@@ -107,51 +108,12 @@ function App() {
         setHrZone5(items.hrZone5Color);
       });
   }, []);
-  return html`<div>
-    <h1>Options</h1>
 
-    <label for="overrideRunsOnly">Override non-running activities</label>
-    <input
-      type="checkbox"
-      id="overrideRunsOnly"
-      name="overrideRunsOnly"
-      onChange=${e => setOverrideRunsOnly(!e.target.checked)}
-      checked=${!overrideRunsOnly}
-    />
-    <br /><br />
-
-    <label for="overrideHR">Override Heart Rate Graph</label>
-    <input
-      type="checkbox"
-      id="overrideHR"
-      name="overrideHR"
-      onChange=${e => setOverrideHR(e.target.checked)}
-      checked=${overrideHR}
-    />
-    <br /><br />
-
-    <label for="overridePower">Override Power Graph</label>
-    <input
-      type="checkbox"
-      id="overridePower"
-      name="overridePower"
-      onChange=${e => setOverridePower(e.target.checked)}
-      checked=${overridePower}
-    />
-    <br /><br />
-
-    <label for="useDefaultHRColors">Use default Heart Rate Zone Colors</label>
-    <input
-      type="checkbox"
-      id="useDefaultHRColors"
-      onChange=${e => setUseDefaultHRColors(e.target.checked)}
-      checked=${useDefaultHRColors}
-      name="useDefaultHRColors"
-    />
-    <br /><br />
-
-    ${!useDefaultHRColors &&
-    html`<div id="hrColors">
+  const hrColorsBlock = html`<div
+    id="hrColors"
+    class="main-container colors-container"
+  >
+    <div>
       <label for="hrZone5">HR Zone 5 Color</label>
       <input
         type="color"
@@ -160,8 +122,9 @@ function App() {
         value=${hrZone5Color}
         onChange=${e => setHrZone5(e.target.value)}
       />
-      <br /><br />
+    </div>
 
+    <div>
       <label for="hrZone4">HR Zone 4 Color</label>
       <input
         type="color"
@@ -170,8 +133,9 @@ function App() {
         value=${hrZone4Color}
         onChange=${e => setHrZone4(e.target.value)}
       />
-      <br /><br />
+    </div>
 
+    <div>
       <label for="hrZone3">HR Zone 3 Color</label>
       <input
         type="color"
@@ -180,8 +144,9 @@ function App() {
         value=${hrZone3Color}
         onChange=${e => setHrZone3(e.target.value)}
       />
-      <br /><br />
+    </div>
 
+    <div>
       <label for="hrZone2">HR Zone 2 Color</label>
       <input
         type="color"
@@ -190,8 +155,9 @@ function App() {
         value=${hrZone2Color}
         onChange=${e => setHrZone2(e.target.value)}
       />
-      <br /><br />
+    </div>
 
+    <div>
       <label for="hrZone1">HR Zone 1 Color</label>
       <input
         type="color"
@@ -200,21 +166,14 @@ function App() {
         value=${hrZone1Color}
         onChange=${e => setHrZone1(e.target.value)}
       />
-      <br /><br />
-    </div> `}
+    </div>
+  </div> `;
 
-    <label for="useDefaultPowerColors">Use default Power Zone Colors</label>
-    <input
-      type="checkbox"
-      id="useDefaultPowerColors"
-      name="useDefaultPowerColors"
-      onChange=${e => setUseDefaultPowerColors(e.target.checked)}
-      checked=${useDefaultPowerColors}
-    />
-    <br /><br />
-
-    ${!useDefaultPowerColors &&
-    html`<div id="powerColors">
+  const powerColorsBlock = html`<div
+    id="powerColors"
+    class="main-container colors-container"
+  >
+    <div>
       <label for="powerZone5">Power Zone 5 Color</label>
       <input
         type="color"
@@ -223,8 +182,9 @@ function App() {
         value=${powerZone5Color}
         onChange=${e => setPowerZone5(e.target.value)}
       />
-      <br /><br />
+    </div>
 
+    <div>
       <label for="powerZone4">Power Zone 4 Color</label>
       <input
         type="color"
@@ -233,8 +193,9 @@ function App() {
         value=${powerZone4Color}
         onChange=${e => setPowerZone4(e.target.value)}
       />
-      <br /><br />
+    </div>
 
+    <div>
       <label for="powerZone3">Power Zone 3 Color</label>
       <input
         type="color"
@@ -243,8 +204,9 @@ function App() {
         value=${powerZone3Color}
         onChange=${e => setPowerZone3(e.target.value)}
       />
-      <br /><br />
+    </div>
 
+    <div>
       <label for="powerZone2">Power Zone 2 Color</label>
       <input
         type="color"
@@ -253,8 +215,9 @@ function App() {
         value=${powerZone2Color}
         onChange=${e => setPowerZone2(e.target.value)}
       />
-      <br /><br />
+    </div>
 
+    <div>
       <label for="powerZone1">Power Zone 1 Color</label>
       <input
         type="color"
@@ -263,19 +226,90 @@ function App() {
         value=${powerZone1Color}
         onChange=${e => setPowerZone1(e.target.value)}
       />
-      <br /><br />
-    </div>`}
+    </div>
+  </div>`;
 
-    <label for="criticalPower">Stryd Critical Power</label>
-    <input
-      type="number"
-      value=${criticalPower}
-      onChange=${e => setCriticalPower(e.target.value)}
-    />
-    <br /><br />
+  return html`<div>
+    <h1>Options</h1>
 
-    <div id="status"></div>
-    <button id="save" onClick=${handleSave}>Save</button>
+    <div class="main-container">
+      <div>
+        <label for="overrideRunsOnly">Override non-running activities</label>
+        <input
+          type="checkbox"
+          id="overrideRunsOnly"
+          name="overrideRunsOnly"
+          onChange=${e => setOverrideRunsOnly(!e.target.checked)}
+          checked=${!overrideRunsOnly}
+        />
+      </div>
+
+      <div>
+        <label for="overrideHR">Override Heart Rate Graph</label>
+        <input
+          type="checkbox"
+          id="overrideHR"
+          name="overrideHR"
+          onChange=${e => setOverrideHR(e.target.checked)}
+          checked=${overrideHR}
+        />
+      </div>
+
+      <div>
+        <label for="overridePower">Override Power Graph</label>
+        <input
+          type="checkbox"
+          id="overridePower"
+          name="overridePower"
+          onChange=${e => setOverridePower(e.target.checked)}
+          checked=${overridePower}
+        />
+      </div>
+
+      <div>
+        <label for="useDefaultHRColors">
+          Use default Heart Rate Zone Colors
+        </label>
+        <input
+          type="checkbox"
+          id="useDefaultHRColors"
+          onChange=${e => setUseDefaultHRColors(e.target.checked)}
+          checked=${useDefaultHRColors}
+          name="useDefaultHRColors"
+        />
+      </div>
+
+      ${!useDefaultHRColors && hrColorsBlock}
+
+      <div>
+        <label for="useDefaultPowerColors">Use default Power Zone Colors</label>
+        <input
+          type="checkbox"
+          id="useDefaultPowerColors"
+          name="useDefaultPowerColors"
+          onChange=${e => setUseDefaultPowerColors(e.target.checked)}
+          checked=${useDefaultPowerColors}
+        />
+      </div>
+
+      ${!useDefaultPowerColors && powerColorsBlock}
+
+      <div>
+        <label for="criticalPower">Stryd Critical Power</label>
+        <input
+          type="number"
+          value=${criticalPower}
+          onChange=${e => setCriticalPower(e.target.value)}
+        />
+      </div>
+
+      <div class="save-controls">
+        <button id="save" onClick=${handleSave}>Save</button>
+        ${showSuccess && html`<div id="status">Options saved!</div>`}
+        ${showError &&
+        html`<div id="status">Error when saving options :(</div>`}
+      </div>
+    </div>
   </div>`;
 }
 

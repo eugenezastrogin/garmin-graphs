@@ -1,0 +1,24 @@
+.main-container {
+  display: flex;
+  flex-direction: column;
+  width: 350px;
+}
+.main-container > div {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+  min-height: 25px;
+}
+.main-container label {
+  font-weight: 600;
+}
+.colors-container div {
+  margin-left: 20px;
+}
+.colors-container label {
+  font-weight: 500;
+}
+.save-controls {
+  display: flex;
+  align-items: center;
+}
