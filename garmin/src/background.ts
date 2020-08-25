@@ -257,6 +257,17 @@ function init() {
   browser.storage.sync.get({ overrideRunsOnly: false }).then(res => {
     overrideRunsOnly = res.overrideRunsOnly;
   });
+  browser.storage.onChanged.addListener((changes, area) => {
+    if (area !== 'sync') return;
+    if ('overrideRunsOnly' in changes) {
+      const { oldValue, newValue } = changes.overrideRunsOnly as {
+        oldValue: boolean;
+        newValue: boolean;
+      };
+      if (oldValue === newValue) return;
+      overrideRunsOnly = newValue;
+    }
+  });
   browser.webRequest.onBeforeRequest.addListener(
     dataSniffer(handleHeartZones),
     { urls: [hrZones] },

@@ -38,16 +38,20 @@ function App() {
         overrideRunsOnly,
         useDefaultHRColors,
         useDefaultPowerColors,
-        powerZone1Color,
-        powerZone2Color,
-        powerZone3Color,
-        powerZone4Color,
-        powerZone5Color,
-        hrZone1Color,
-        hrZone2Color,
-        hrZone3Color,
-        hrZone4Color,
-        hrZone5Color,
+        powerColors: [
+          powerZone1Color,
+          powerZone2Color,
+          powerZone3Color,
+          powerZone4Color,
+          powerZone5Color,
+        ],
+        hrColors: [
+          hrZone1Color,
+          hrZone2Color,
+          hrZone3Color,
+          hrZone4Color,
+          hrZone5Color,
+        ],
       })
       .then(() => {
         setShowSuccess(true);
@@ -55,7 +59,7 @@ function App() {
           setShowSuccess(false);
         }, 1000);
       }),
-      e => {
+      () => {
         setShowError(true);
         setTimeout(function () {
           setShowError(false);
@@ -71,23 +75,17 @@ function App() {
         overridePower: true,
         criticalPower: 260,
 
-        overrideRunsOnly: true,
+        overrideRunsOnly: false,
 
         useDefaultHRColors: true,
-        hrZone1Color: '#e3e5e5',
-        hrZone2Color: '#bee5f1',
-        hrZone3Color: '#c9e7b6',
-        hrZone4Color: '#f4e3b1',
-        hrZone5Color: '#ecadc4',
+        hrColors: ['#e3e5e5', '#bee5f1', '#c9e7b6', '#f4e3b1', '#ecadc4'],
 
         useDefaultPowerColors: true,
-        powerZone1Color: '#7ffc89',
-        powerZone2Color: '#7fdcfe',
-        powerZone3Color: '#ffdb7f',
-        powerZone4Color: '#ffb57f',
-        powerZone5Color: '#ee9e8a',
+        powerColors: ['#7ffc89', '#7fdcfe', '#ffdb7f', '#ffb57f', '#ee9e8a'],
       })
       .then(items => {
+        const [pz1, pz2, pz3, pz4, pz5] = items.powerColors;
+        const [hz1, hz2, hz3, hz4, hz5] = items.hrColors;
         setCriticalPower(items.criticalPower);
         setOverrideHR(items.overrideHR);
         setOverridePower(items.overridePower);
@@ -95,17 +93,17 @@ function App() {
         setUseDefaultPowerColors(items.useDefaultPowerColors);
         setUseDefaultHRColors(items.useDefaultHRColors);
 
-        setPowerZone1(items.powerZone1Color);
-        setPowerZone2(items.powerZone2Color);
-        setPowerZone3(items.powerZone3Color);
-        setPowerZone4(items.powerZone4Color);
-        setPowerZone5(items.powerZone5Color);
+        setPowerZone1(pz1);
+        setPowerZone2(pz2);
+        setPowerZone3(pz3);
+        setPowerZone4(pz4);
+        setPowerZone5(pz5);
 
-        setHrZone1(items.hrZone1Color);
-        setHrZone2(items.hrZone2Color);
-        setHrZone3(items.hrZone3Color);
-        setHrZone4(items.hrZone4Color);
-        setHrZone5(items.hrZone5Color);
+        setHrZone1(hz1);
+        setHrZone2(hz2);
+        setHrZone3(hz3);
+        setHrZone4(hz4);
+        setHrZone5(hz5);
       });
   }, []);
 
@@ -244,6 +242,8 @@ function App() {
         />
       </div>
 
+      <div class="gap"></div>
+
       <div>
         <label for="overrideHR">Override Heart Rate Graph</label>
         <input
@@ -252,17 +252,6 @@ function App() {
           name="overrideHR"
           onChange=${e => setOverrideHR(e.target.checked)}
           checked=${overrideHR}
-        />
-      </div>
-
-      <div>
-        <label for="overridePower">Override Power Graph</label>
-        <input
-          type="checkbox"
-          id="overridePower"
-          name="overridePower"
-          onChange=${e => setOverridePower(e.target.checked)}
-          checked=${overridePower}
         />
       </div>
 
@@ -280,6 +269,19 @@ function App() {
       </div>
 
       ${!useDefaultHRColors && hrColorsBlock}
+
+      <div class="gap"></div>
+
+      <div>
+        <label for="overridePower">Override Stryd Power Graph</label>
+        <input
+          type="checkbox"
+          id="overridePower"
+          name="overridePower"
+          onChange=${e => setOverridePower(e.target.checked)}
+          checked=${overridePower}
+        />
+      </div>
 
       <div>
         <label for="useDefaultPowerColors">Use default Power Zone Colors</label>

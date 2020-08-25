@@ -9,6 +9,7 @@ const polarColors: Color[] = [
   '#bee5f1',
   '#e3e5e5',
 ];
+let hrColors = polarColors;
 const strydColors: Color[] = [
   '#ee9e8a',
   '#ffb57f',
@@ -16,6 +17,7 @@ const strydColors: Color[] = [
   '#7fdcfe',
   '#7ffc89',
 ];
+let powerColors = strydColors;
 let heartZones: Zones | null = null;
 let powerZones: Zones | null = null;
 
@@ -211,7 +213,7 @@ function handleActivityData(message: ActivityEntry) {
         const newHRGraph = chart(
           message.heartRate,
           heartZones!,
-          polarColors,
+          hrColors,
           false,
           'Heart Rate',
         );
@@ -233,7 +235,7 @@ function handleActivityData(message: ActivityEntry) {
         const newPowerGraph = chart(
           message.power,
           powerZones!,
-          strydColors,
+          powerColors,
           true,
           'Power',
         );
@@ -276,6 +278,22 @@ function init() {
       0.65 * criticalPower,
     ];
   });
+  browser.storage.sync
+    .get()
+    .then(({ useDefaultHRColors, hrColors: userColors }) => {
+      if (useDefaultHRColors) return;
+      log('Overriding default HR colors');
+      hrColors = userColors.reverse();
+    })
+    .catch(e => log(`Error when getting HR Colors state: ${e}`));
+  browser.storage.sync
+    .get()
+    .then(({ useDefaultPowerColors, powerColors: userColors }) => {
+      if (useDefaultPowerColors) return;
+      log('Overriding default power colors');
+      powerColors = userColors.reverse();
+    })
+    .catch(e => log(`Error when getting Power Colors state: ${e}`));
 
   const connection = browser.runtime.connect();
   connection.onMessage.addListener(message => {
