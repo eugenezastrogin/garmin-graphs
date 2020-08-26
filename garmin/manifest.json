@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "GarminGraphs",
-  "version": "1.0",
+  "version": "1.0.1",
 
   "description": "Adds Colored Zones to Garmin Activity Graphs",
 

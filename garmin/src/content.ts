@@ -145,8 +145,8 @@ function getGraphRootNode(name: string): HTMLDivElement | undefined {
     el => el.innerText === name,
   );
   if (!requestedChart.length) return undefined;
-  return requestedChart[0].parentElement?.parentElement?.parentElement
-    ?.parentElement as HTMLDivElement;
+  return requestedChart[0].parentElement!.parentElement!.parentElement!
+    .parentElement as HTMLDivElement;
 }
 
 function getGraphRootNodeByCircleColor(
@@ -159,8 +159,8 @@ function getGraphRootNodeByCircleColor(
     el => el.style.backgroundColor === color,
   );
   if (!requestedChart.length) return undefined;
-  return requestedChart[0].parentElement?.parentElement?.parentElement
-    ?.parentElement as HTMLDivElement;
+  return requestedChart[0].parentElement!.parentElement!.parentElement!
+    .parentElement as HTMLDivElement;
 }
 
 function wrapChart(
