@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "GarminGraphs",
-  "version": "1.0",
+  "version": "1.0.1",
 
   "description": "Adds Colored Zones to Garmin Activity Graphs",
 
@@ -12,27 +12,38 @@
   "permissions": [
     "storage",
     "webRequest",
+    "webNavigation",
     "webRequestBlocking",
 
     "https://connect.garmin.com/modern/proxy/activity-service/activity/*",
     "https://connect.garmin.com/modern/proxy/biometric-service/heartRateZones/*"
   ],
 
-  "browser_action": {
-    "default_icon": "images/icon32.png",
-    "default_title": "GarminGraphs",
-    "default_popup": "options.html"
-  },
-
   "content_scripts": [
     {
-      "matches": ["https://connect.garmin.com/modern/activity/*"],
-      "js": ["scripts/content.js", "scripts/d3.v5.min.js"]
+      "matches": ["https://connect.garmin.com/*"],
+      "js": [
+        "libs/d3-array.v2.min.js",
+        "libs/d3-axis.v2.min.js",
+        "libs/d3-format.v2.min.js",
+        "libs/d3-interpolate.v2.min.js",
+        "libs/d3-path.v2.min.js",
+        "libs/d3-scale.v3.min.js",
+        "libs/d3-selection.v2.min.js",
+        "libs/d3-shape.v2.min.js",
+
+        "scripts/content.js"
+      ]
     }
   ],
 
   "background": {
     "scripts": ["scripts/background.js"]
+  },
+
+  "options_ui": {
+    "page": "options.html",
+    "browser_style": true
   },
 
   "browser_specific_settings": {

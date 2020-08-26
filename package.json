@@ -1,0 +1,35 @@
+{
+  "name": "garmingraphs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "prod": "web-ext build -i \"src\" -s garmin ",
+    "watch": "tsc -w"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aethelz/garmin-graphs.git"
+  },
+  "author": "aethelz",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/aethelz/garmin-graphs/issues"
+  },
+  "homepage": "https://github.com/aethelz/garmin-graphs#readme",
+  "dependencies": {
+    "typescript": "^3.9.7"
+  },
+  "devDependencies": {
+    "@types/d3": "^5.7.2",
+    "@types/firefox-webext-browser": "^78.0.1",
+    "@typescript-eslint/eslint-plugin": "^3.9.0",
+    "@typescript-eslint/parser": "^3.9.0",
+    "eslint": "^7.6.0",
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-plugin-prettier": "^3.1.4",
+    "prettier": "^2.0.5",
+    "web-ext": "^5.0.0"
+  }
+}
