@@ -1,6 +1,6 @@
-import { h, render } from './preact.module.js';
-import { useState, useEffect } from './hooks.module.js';
-import htm from './htm.module.js';
+import { h, render } from '../libs/preact.module.js';
+import { useState, useEffect } from '../libs/hooks.module.js';
+import htm from '../libs/htm.module.js';
 
 // Initialize htm with Preact
 const html = htm.bind(h);

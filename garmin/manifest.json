@@ -22,7 +22,7 @@
   "content_scripts": [
     {
       "matches": ["https://connect.garmin.com/*"],
-      "js": ["scripts/d3.v5.min.js", "scripts/content.js"]
+      "js": ["libs/d3.v5.min.js", "scripts/content.js"]
     }
   ],
 

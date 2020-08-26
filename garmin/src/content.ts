@@ -268,7 +268,7 @@ function init() {
     .then(({ hrZones }) => {
       heartZones = hrZones as Zones;
     });
-  browser.storage.sync.get('criticalPower').then(({ criticalPower }) => {
+  browser.storage.sync.get({ criticalPower: 260 }).then(({ criticalPower }) => {
     powerZones = [
       3 * criticalPower,
       1.15 * criticalPower,
@@ -279,7 +279,7 @@ function init() {
     ];
   });
   browser.storage.sync
-    .get()
+    .get({ useDefaultHRColors: true, hrColors: polarColors })
     .then(({ useDefaultHRColors, hrColors: userColors }) => {
       if (useDefaultHRColors) return;
       log('Overriding default HR colors');
@@ -287,7 +287,7 @@ function init() {
     })
     .catch(e => log(`Error when getting HR Colors state: ${e}`));
   browser.storage.sync
-    .get()
+    .get({ useDefaultPowerColors: true, powerColors: strydColors })
     .then(({ useDefaultPowerColors, powerColors: userColors }) => {
       if (useDefaultPowerColors) return;
       log('Overriding default power colors');
