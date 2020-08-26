@@ -1,6 +1,6 @@
 import type { Color, Zone, Data, ActivityEntry, Zones } from './types';
 
-const debug = true;
+const debug = false;
 
 const polarColors: Color[] = [
   '#ecadc4',

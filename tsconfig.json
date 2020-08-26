@@ -4,9 +4,7 @@
     "removeComments": true,
     "lib": ["es2017", "dom", "dom.iterable"],
     "outDir": "./garmin/scripts/",
-    "strict": true,
-    "inlineSources": true,
-    "sourceMap": true
+    "strict": true
   },
   "include": ["./garmin/src/*"]
 }

@@ -9,7 +9,7 @@ import type {
   Zones,
 } from './types';
 
-const debug = true;
+const debug = false;
 
 const hrZones =
   'https://connect.garmin.com/modern/proxy/biometric-service/heartRateZones/*';

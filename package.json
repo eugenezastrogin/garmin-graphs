@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc",
+    "prod": "web-ext build -i \"src\" -s garmin ",
     "watch": "tsc -w"
   },
   "repository": {
@@ -28,6 +29,7 @@
     "eslint": "^7.6.0",
     "eslint-config-prettier": "^6.11.0",
     "eslint-plugin-prettier": "^3.1.4",
-    "prettier": "^2.0.5"
+    "prettier": "^2.0.5",
+    "web-ext": "^5.0.0"
   }
 }

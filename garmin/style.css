@@ -25,3 +25,10 @@
 .main-container > .gap {
   min-height: 5px;
 }
+button {
+  height: 30px;
+  width: 60px;
+}
+input[type='number'] {
+  width: 50px;
+}
