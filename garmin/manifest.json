@@ -22,7 +22,18 @@
   "content_scripts": [
     {
       "matches": ["https://connect.garmin.com/*"],
-      "js": ["libs/d3.v5.min.js", "scripts/content.js"]
+      "js": [
+        "libs/d3-array.v2.min.js",
+        "libs/d3-axis.v2.min.js",
+        "libs/d3-format.v2.min.js",
+        "libs/d3-interpolate.v2.min.js",
+        "libs/d3-path.v2.min.js",
+        "libs/d3-scale.v3.min.js",
+        "libs/d3-selection.v2.min.js",
+        "libs/d3-shape.v2.min.js",
+
+        "scripts/content.js"
+      ]
     }
   ],
 
