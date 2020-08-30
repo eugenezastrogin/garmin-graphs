@@ -3,8 +3,8 @@
     "target": "es2017",
     "removeComments": true,
     "lib": ["es2017", "dom", "dom.iterable"],
-    "outDir": "./garmin/scripts/",
+    "outDir": "./firefox/scripts/",
     "strict": true
   },
-  "include": ["./garmin/src/*"]
+  "include": ["./firefox/src/*"]
 }

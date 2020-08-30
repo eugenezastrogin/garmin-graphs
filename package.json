@@ -1,11 +1,11 @@
 {
   "name": "garmingraphs",
-  "version": "1.0.0",
-  "description": "",
+  "version": "1.0.1",
+  "description": "Garmin Connect Web Firefox extension with colored Zone Graphs",
   "main": "index.js",
   "scripts": {
     "build": "tsc",
-    "prod": "web-ext build -i \"src\" -s garmin ",
+    "prod": "(tsc || true) && web-ext build -i \"src\" scripts/types.js -s firefox",
     "watch": "tsc -w"
   },
   "repository": {
