@@ -24,7 +24,7 @@ Extension consists of following files:
 
     Content script spawns on every Garmin Connect Page, it listens to incoming activity data from background script, finds and replaces stock graphs with colored [D3.js](https://d3js.org/) ones.
 
-* options.html + options.ts 
+* options.html + options.ts
 
     Preference page, uses [Preact](https://preactjs.com/) and [HTM](https://github.com/developit/htm) ES modules to avoid extra build steps.
 
@@ -32,6 +32,11 @@ Extension consists of following files:
 
     Provides common types for background-content communication, describes relevant parts of the Garmin API responses
 
-* libs dir 
+* libs dir
 
     Contains D3 microlibraries and Preact ES modules to cut on size without introducing build steps.
+
+
+## Similar projects
+
+* [GCO](https://github.com/truxoft/GCO)
