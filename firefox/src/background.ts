@@ -170,7 +170,7 @@ function handleActivityDetails(data: string) {
       ({ key }) => key === 'directHeartRate',
     );
     const secsElapsedMetric = metricDescriptors.find(
-      ({ key }) => key === 'sumElapsedDuration',
+      ({ key }) => key === 'sumMovingDuration',
     );
     if (!hrMetric || !secsElapsedMetric) {
       log('no HR!');
