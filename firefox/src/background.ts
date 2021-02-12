@@ -17,7 +17,11 @@ const activity =
   'https://connect.garmin.com/modern/proxy/activity-service/activity/*';
 const userMeta =
   'https://connect.garmin.com/modern/proxy/userprofile-service/userprofile/user-settings/*';
-const strydZonesDataFieldID = '18fb2cf0-1a4b-430d-ad66-988c847421f4';
+const strydZonesDataFieldIDs = [
+  '18fb2cf0-1a4b-430d-ad66-988c847421f4', // Stryd Zones | Data Field
+  '1df63e9d-f886-4541-b188-2406a3bf5be0', // Stryd | Workout App
+  '528937a6-1596-499d-8a96-b095480dfda7', //PowerRace | Racing App
+];
 const filter = {
   url: [{ hostContains: 'connect.garmin.com' }],
 };
@@ -164,7 +168,7 @@ function handleActivityDetails(data: string) {
       return;
     }
     const powerMetric = metricDescriptors.find(
-      ({ appID }) => appID && appID === strydZonesDataFieldID,
+      ({ appID }) => appID && strydZonesDataFieldIDs.includes(appID),
     );
     const hrMetric = metricDescriptors.find(
       ({ key }) => key === 'directHeartRate',
