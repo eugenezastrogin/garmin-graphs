@@ -164,7 +164,6 @@ function getGraphRootNodeByCircleColor(
 }
 
 function wrapChart(
-  chartsContainer: HTMLDivElement,
   oldChart: HTMLDivElement,
   newChart: SVGSVGElement,
 ) {
@@ -193,13 +192,13 @@ function wrapChart(
 
   wrapper.appendChild(switcher);
   wrapper.appendChild(newChart);
-  chartsContainer.replaceChild(wrapper, oldChart);
+  oldChart.parentElement!.replaceChild(wrapper, oldChart);
   wrapper.appendChild(oldChart);
   oldChart.style.display = 'none';
 }
 
 function handleActivityData(message: ActivityEntry) {
-  function main(chartsContainer: HTMLDivElement) {
+  function main() {
     browser.storage.sync
       .get({ overrideHR: true })
       .then(({ overrideHR }) => {
@@ -217,7 +216,7 @@ function handleActivityData(message: ActivityEntry) {
           false,
           'Heart Rate',
         );
-        wrapChart(chartsContainer, oldHRGraph, newHRGraph);
+        wrapChart(oldHRGraph, newHRGraph);
       })
       .catch(e => log(`Error when getting overrideHR state: ${e}`));
 
@@ -239,14 +238,14 @@ function handleActivityData(message: ActivityEntry) {
           true,
           'Power',
         );
-        wrapChart(chartsContainer, oldPowerGraph, newPowerGraph);
+        wrapChart(oldPowerGraph, newPowerGraph);
       })
       .catch(e => log(`Error when getting overridePower state: ${e}`));
   }
 
   let tries = 15;
   const retryInteval = setInterval(() => {
-    const chartsContainer = document.getElementById('charts-container');
+    const chartsContainer = document.getElementById('activityChartsViewPlaceholder');
     if (tries === 0) {
       clearInterval(retryInteval);
     }
@@ -255,7 +254,7 @@ function handleActivityData(message: ActivityEntry) {
     if (chartsContainer) {
       log('Container found!');
       clearInterval(retryInteval);
-      main(chartsContainer);
+      main();
     } else {
       log(`No Chart Container! Retrying ${tries + 1} more times...`);
     }
