@@ -12,9 +12,9 @@ import type {
 const debug = false;
 
 const hrZones =
-  'https://connect.garmin.com/modern/proxy/biometric-service/heartRateZones/*';
+  'https://connect.garmin.com/biometric-service/heartRateZones/*';
 const activity =
-  'https://connect.garmin.com/modern/proxy/activity-service/activity/*';
+  'https://connect.garmin.com/activity-service/activity/*';
 const userMeta =
   'https://connect.garmin.com/modern/proxy/userprofile-service/userprofile/user-settings/*';
 const strydZonesDataFieldIDs = [
